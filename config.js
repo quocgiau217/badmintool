@@ -4,7 +4,15 @@
 // Để null = chỉ dùng trên 1 máy, không có phòng online.
 // Các giá trị này KHÔNG phải mật khẩu, được phép công khai.
 // ============================================================
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCMPBgTFcZRcvJo1jtc5aCoFTClGwiNvQg",
+  authDomain: "badmintool.firebaseapp.com",
+  databaseURL: "https://badmintool-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "badmintool",
+  storageBucket: "badmintool.firebasestorage.app",
+  messagingSenderId: "548488407988",
+  appId: "1:548488407988:web:3b01d7d38d1576ce6aa0e1"
+};
 /* Ví dụ:
 window.FIREBASE_CONFIG = {
   apiKey: "AIza...",

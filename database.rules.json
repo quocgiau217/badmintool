@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "rooms": {
+      "$id": {
+        ".read": true,
+        ".write": "auth != null && !data.exists()",
+        ".validate": "$id.matches(/^[a-z0-9-]{3,30}$/) && newData.hasChildren(['name', 'created']) && newData.child('name').isString() && newData.child('name').val().length <= 40"
+      }
+    },
+    "adminKeys": {
+      "$k": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "$k.matches(/^[0-9a-f]{64}$/) && newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
+      }
+    },
+    "admins": {
+      "$k": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && newData.val() === root.child('adminKeys').child($k).val()"
+        }
+      }
+    },
+    "data": {
+      "$k": {
+        ".read": true,
+        ".write": "auth != null && root.child('admins').child($k).child(auth.uid).exists()",
+        ".validate": "$k.matches(/^[0-9a-f]{64}$/) && newData.hasChildren(['s', 't']) && newData.child('s').isString() && newData.child('s').val().length < 500000"
+      }
+    }
+  }
+}

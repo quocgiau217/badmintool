@@ -10,12 +10,14 @@ Web app chạy trên điện thoại để xếp cặp đánh đôi cho nhóm 4�
   - Chế độ **Cân trình**: tổng trình 2 đội gần bằng nhau, 4 người trên sân gần trình nhau. Chế độ **Ngẫu nhiên**: bỏ qua trình độ.
   - Người đến muộn được tính "bù trận" để không bị dồn đánh liên tục.
 - **Xem trước các vòng sau** (2–8 vòng, chỉnh trong ⚙️): lịch dự kiến giữ nguyên khi sang vòng mới, tự tính lại nếu có người đến/về, đổi chỗ hoặc đổi cài đặt. Chạm vào tên để xem người đó đánh / nghỉ vòng nào.
+- **Sân linh hoạt**: chọn số sân thuê được (1–10), đặt tên sân theo nhà thi đấu (vd: Sân 3, Sân 7). Đang đánh mà có thêm sân trống → **Mở thêm 1 sân** (lấy 4 người đang nghỉ); bị lấy mất sân → chạm tên sân → **Bỏ sân này** (4 người chuyển sang nghỉ, các vòng sau tự xếp lại).
 - **Đổi chỗ thủ công**: chạm 2 người để hoán đổi (kể cả người đang nghỉ).
 - **Gửi nhóm**: chia sẻ / copy vòng hiện tại hoặc cả lịch dự kiến để dán vào Zalo, Messenger.
 - **Ghi & sửa kết quả** (tuỳ chọn): chọn đội thắng hoặc nhập tỉ số, sửa được cả các vòng đã xong (tab Thống kê → Lịch sử → chạm vào trận); bảng xếp hạng tính thắng + hiệu số (HS) và **thống kê**: số trận, thắng, nghỉ; lịch sử các vòng.
 
 - **Phòng online** (tuỳ chọn): mỗi nhóm tạo 1 phòng có **mật khẩu xem** và **mã quản lý**. Cả nhóm mở link mời là thấy lịch, cập nhật trực tiếp; chỉ người có mã quản lý mới được xếp sân / sửa. Nhiều nhóm dùng chung 1 trang, dữ liệu tách riêng.
 - **Sảnh phòng**: khi bật phòng online, mở web sẽ thấy ngay danh sách **phòng hiện có** (tìm theo tên / mã), nút **Tạo phòng** và **Nhập mã**. Chạm 1 phòng → nhập mật khẩu để vào. Phòng đã vào được lưu ở mục *Phòng của bạn*, lần sau chạm là vào luôn. Vẫn có thể chọn *Dùng trên máy này* để dùng không cần phòng.
+- **Xoá phòng**: người quản lý vào ☁️ Phòng → **Xoá phòng** (gõ lại mã phòng để xác nhận). Dữ liệu bị xoá vĩnh viễn, mọi người đang xem được đưa về danh sách phòng.
 
 ## Cách dùng
 1. Tab **Người chơi**: thêm tên, tích người có mặt, chọn trình độ.
@@ -39,7 +41,7 @@ Không bật thì app vẫn chạy bình thường, dữ liệu chỉ lưu trên
 6. Mở file [`config.js`](config.js), thay `window.FIREBASE_CONFIG = null;` bằng config vừa copy (nhớ có dòng `databaseURL`). Commit & push.
 7. Mở trang → màn hình danh sách phòng → **Tạo phòng**.
 
-> Đã dán Rules từ bản cũ? Hãy dán lại nội dung mới của `database.rules.json` và **Publish** — bản mới cho phép xem danh sách phòng.
+> Đã dán Rules từ bản cũ? Hãy dán lại **toàn bộ** nội dung mới của `database.rules.json` và **Publish** — bản mới cho phép xem danh sách phòng và xoá phòng. Phòng tạo bằng bản cũ không xoá được trong app, hãy xoá trong Firebase Console (tab Data).
 
 ### Bảo mật hoạt động thế nào
 - Danh sách phòng (chỉ gồm **tên nhóm, mã phòng, ngày tạo**) là công khai để mọi người tìm phòng.

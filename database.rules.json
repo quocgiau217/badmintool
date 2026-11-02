@@ -2,21 +2,29 @@
   "rules": {
     "rooms": {
       ".read": true,
-      ".indexOn": ["created"],
+      ".indexOn": [
+        "created"
+      ],
       "$id": {
-        ".read": true,
-        ".write": "auth != null && !data.exists()",
+        ".write": "auth != null && root.child('roomKeys').child($id).exists() && root.child('admins').child(root.child('roomKeys').child($id).val()).child(auth.uid).exists() && (!data.exists() || !newData.exists())",
         ".validate": "$id.matches(/^[a-z0-9-]{3,30}$/) && newData.hasChildren(['name', 'created']) && newData.child('name').isString() && newData.child('name').val().length <= 40"
+      }
+    },
+    "roomKeys": {
+      "$id": {
+        ".write": "auth != null && ((!data.exists() && !root.child('rooms').child($id).exists()) || (data.exists() && !newData.exists() && root.child('admins').child(data.val()).child(auth.uid).exists()))",
+        ".validate": "$id.matches(/^[a-z0-9-]{3,30}$/) && newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
       }
     },
     "adminKeys": {
       "$k": {
-        ".write": "auth != null && !data.exists()",
+        ".write": "auth != null && (!data.exists() || (!newData.exists() && root.child('admins').child($k).child(auth.uid).exists()))",
         ".validate": "$k.matches(/^[0-9a-f]{64}$/) && newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
       }
     },
     "admins": {
       "$k": {
+        ".write": "auth != null && !newData.exists() && root.child('admins').child($k).child(auth.uid).exists()",
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",
           ".write": "auth != null && auth.uid === $uid && newData.val() === root.child('adminKeys').child($k).val()"

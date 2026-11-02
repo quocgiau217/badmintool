@@ -247,6 +247,15 @@ textarea{width:100%;min-height:120px;border-radius:16px;border:1.5px solid var(-
 .ro-note{background:var(--surface);box-shadow:var(--shadow);border-radius:16px;padding:12px 14px;font-size:13.5px;color:var(--muted)}
 .ro .half .win{pointer-events:none}
 [hidden]{display:none!important}
+body.lobby{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.lobby-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lobby-actions .btn{min-height:56px}
+.search input{height:46px}
+.lock{flex:none;width:32px;text-align:center;color:var(--muted);font-size:15px}
+.prow .x{flex:none;width:36px;height:36px;border-radius:10px;color:var(--muted)}
+.spin{display:inline-block;width:18px;height:18px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--brand);
+  animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- action bar & nav ---------- */
 .bar{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;padding:0 16px;pointer-events:none}
@@ -345,7 +354,6 @@ const defaultState = () => ({
   tab: 'players'
 });
 let room = null; // phòng online đang vào: {id, name, key, admin, pw}
-try { room = window.FIREBASE_CONFIG ? JSON.parse(localStorage.getItem('badminton_room_cur') || 'null') : null; } catch (e) {}
 const ctxKey = () => room ? 'badminton_room_' + room.id : KEY; // mỗi phòng 1 bản lưu riêng trên máy
 function loadState() {
   let st; try { st = Object.assign(defaultState(), JSON.parse(localStorage.getItem(ctxKey()) || '{}')); } catch (e) { st = defaultState(); }
@@ -758,7 +766,7 @@ function settingsHtml() {
 }
 
 /* ================== PHÒNG ONLINE (Firebase) ==================
- * rooms/<mã phòng>            {name, created}       công khai: chỉ để biết phòng có tồn tại
+ * rooms/<mã phòng>            {name, created}       công khai: danh sách phòng hiện có (không chứa dữ liệu)
  * data/<SHA256(mã+mật khẩu)>  {s: JSON, t, by}      ai biết mật khẩu mới tính ra được địa chỉ này
  * adminKeys/<khoá xem>        SHA256(mã+mã quản lý) không ai đọc được
  * admins/<khoá xem>/<uid>     thiết bị đã nhập đúng mã quản lý -> được ghi data
@@ -768,6 +776,9 @@ const FB_VER = '10.12.2';
 let FB = null, fbDb = null, myUid = null, cloudReady = null;
 let roomStatus = 'connecting'; // connecting | online | offline
 let unsubRoom = null, lastRemote = '', pushT = null;
+// Sảnh phòng: màn hình đầu tiên khi mở web (nếu đã bật Firebase)
+let lobby = CLOUD_ON;
+let lobbyRooms = null, lobbyErr = '', lobbyQ = '', unsubRooms = null;
 const LS_RECENT = 'badminton_rooms_recent';
 
 async function sha256(s) {
@@ -854,15 +865,48 @@ function recentRooms() { try { return JSON.parse(localStorage.getItem(LS_RECENT)
 function rememberRoom(r) {
   const list = recentRooms().filter(x => x.id !== r.id);
   list.unshift({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '' });
-  try { localStorage.setItem(LS_RECENT, JSON.stringify(list.slice(0, 10))); localStorage.setItem('badminton_room_cur', JSON.stringify(r)); } catch (e) {}
+  try { localStorage.setItem(LS_RECENT, JSON.stringify(list.slice(0, 10))); } catch (e) {}
 }
 function forgetRoom(id) {
+  haptic();
   try { localStorage.setItem(LS_RECENT, JSON.stringify(recentRooms().filter(x => x.id !== id))); localStorage.removeItem('badminton_room_' + id); } catch (e) {}
-  openRoomSheet();
+  render(); toast('Đã xoá khỏi máy này');
+}
+
+/* ---------- danh sách tất cả phòng (sảnh) ---------- */
+function watchRooms() {
+  if (!lobby || unsubRooms || lobbyErr) return;
+  cloudInit().then(() => {
+    if (!lobby || unsubRooms) return;
+    const q = FB.query(dbRef('rooms'), FB.orderByChild('created'), FB.limitToLast(200));
+    unsubRooms = FB.onValue(q, snap => {
+      const list = [];
+      snap.forEach(c => { const v = c.val() || {}; list.push({ id: c.key, name: String(v.name || c.key), created: +v.created || 0 }); });
+      lobbyRooms = list.sort((a, b) => b.created - a.created); lobbyErr = '';
+      renderRoomList();
+    }, e => {
+      unsubRooms = null;
+      lobbyErr = /permission/i.test(String(e && (e.code || e.message))) ? 'Chưa xem được danh sách phòng — người cài đặt cần cập nhật Rules mới trên Firebase' : cloudError(e);
+      renderRoomList();
+    });
+  }).catch(e => { lobbyErr = cloudError(e); renderRoomList(); });
+}
+function stopWatchRooms() { if (unsubRooms) unsubRooms(); unsubRooms = null; }
+function retryRooms() { lobbyErr = ''; lobbyRooms = null; renderRoomList(); watchRooms(); }
+function goLobby() { haptic(); closeSheet(); lobby = true; selSlot = null; focusId = null; render(); window.scrollTo(0, 0); }
+function goLocal() { haptic(); stopWatchRooms(); lobby = false; S = loadState(); render(); window.scrollTo(0, 0); }
+// chạm 1 phòng trong sảnh: phòng đã vào trước đó thì vào luôn, chưa thì hỏi mật khẩu
+function pickRoom(btn, id) {
+  haptic();
+  const r = recentRooms().find(x => x.id === id);
+  if (r && r.key) return runBusy(btn, () => openRoomByKey(id, r.key));
+  const info = (lobbyRooms || []).find(x => x.id === id);
+  openJoin(id, info && info.name);
 }
 
 /* ---------- vào / tạo / rời phòng ---------- */
 function enterRoom(info) {
+  stopWatchRooms(); lobby = false;
   room = info; rememberRoom(room);
   const tab = S.tab;
   S = loadState(); S.tab = tab === 'players' && !room.admin ? 'play' : tab;
@@ -873,7 +917,7 @@ function enterRoom(info) {
 async function openRoomByKey(id, key, pw) {
   await cloudInit();
   const r = await FB.get(dbRef('rooms/' + id));
-  if (!r.exists()) throw new Error('Không tìm thấy phòng "' + id + '"');
+  if (!r.exists()) throw new Error('Không tìm thấy phòng "' + id + '" — có thể phòng đã bị xoá');
   const d = await FB.get(dbRef('data/' + key));
   if (!d.exists()) throw new Error('Sai mật khẩu');
   const adm = await FB.get(dbRef('admins/' + key + '/' + myUid)).catch(() => null);
@@ -916,9 +960,10 @@ async function unlockAdmin(code) {
 }
 function leaveRoom() {
   if (unsubRoom) unsubRoom(); unsubRoom = null;
-  room = null; try { localStorage.removeItem('badminton_room_cur'); } catch (e) {}
+  clearTimeout(pushT); if (room && room.admin) pushNow(); // gửi nốt thay đổi chưa kịp lưu
+  room = null; lastRemote = '';
   S = loadState(); selSlot = null; focusId = null;
-  closeSheet(); render(); toast('Đã rời phòng — đang dùng dữ liệu trên máy');
+  lobby = true; closeSheet(); render(); window.scrollTo(0, 0);
 }
 function inviteLink() { return `${location.origin}${location.pathname}#r=${encodeURIComponent(room.id)}&k=${room.key}`; }
 function shareInvite() {
@@ -939,7 +984,8 @@ function openRoomSheet() {
   if (!CLOUD_ON) return openSheet(`<h3>☁️ Phòng chơi chung</h3>
     <p>Chế độ phòng online chưa được bật trên trang này. Người cài đặt trang cần tạo dự án Firebase (miễn phí) và dán cấu hình vào file <b>config.js</b> — xem hướng dẫn trong README.</p>
     <button class="btn block" onclick="closeSheet()">Đóng</button>`);
-  if (room) return openSheet(`
+  if (!room) return goLobby();
+  openSheet(`
     <div class="room-card"><div class="logo">🏸</div><div style="min-width:0"><h3 style="margin:0">${esc(room.name)}</h3>
       <div class="small muted">Mã phòng: <b>${esc(room.id)}</b>${room.pw ? ` · Mật khẩu: <b>${esc(room.pw)}</b>` : ''}</div></div></div>
     <div class="room-meta"><span class="role ${room.admin ? 'adm' : ''}">${room.admin ? '✏️ Quản lý' : '👁 Chỉ xem'}</span>
@@ -947,26 +993,47 @@ function openRoomSheet() {
     <div style="display:grid;gap:10px;margin-top:16px">
       <button class="btn primary block" onclick="shareInvite()">📨 Mời mọi người vào phòng</button>
       ${room.admin ? '' : `<button class="btn block" onclick="openUnlock()">🔑 Nhập mã quản lý để sửa</button>`}
-      <button class="btn block" onclick="openRoomList()">🔁 Đổi phòng khác</button>
-      <button class="btn danger block" onclick="leaveRoom()">↩️ Rời phòng (dùng trên máy)</button>
+      <button class="btn block" onclick="leaveRoom()">🚪 Rời phòng · về danh sách phòng</button>
     </div>`);
-  openRoomList();
 }
-function openRoomList() {
+/* ---------- sảnh phòng ---------- */
+const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+const fmtDate = t => t ? new Date(t).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+function roomRow(r, mine) {
+  return `<div class="prow"><button class="tap" onclick="pickRoom(this,'${esc(r.id)}')">
+      <div class="av" style="background:hsl(${hue(r.name)} 55% 46%)">${esc(initials(r.name))}</div>
+      <div style="min-width:0"><div class="nm">${esc(r.name)}</div>
+      <div class="meta">#${esc(r.id)} · ${mine ? (r.admin ? '✏️ Quản lý' : '👁 Chỉ xem') : fmtDate(r.created) ? 'tạo ' + fmtDate(r.created) : 'cần mật khẩu'}</div></div></button>
+    ${mine ? `<button class="x" onclick="forgetRoom('${esc(r.id)}')" aria-label="Xoá khỏi máy này">✕</button>` : '<span class="lock" aria-label="Cần mật khẩu">🔒</span>'}</div>`;
+}
+function viewLobby() {
   const rec = recentRooms();
-  openSheet(`<h3>☁️ Phòng chơi chung</h3>
-    <p>Tạo phòng cho nhóm của bạn — cả nhóm mở link là xem được lịch đánh, cập nhật trực tiếp. Mỗi phòng có mật khẩu riêng.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  return `
+    <div class="lobby-actions">
       <button class="btn primary" onclick="openCreate()">➕ Tạo phòng</button>
-      <button class="btn" onclick="openJoin()">🔑 Vào phòng</button></div>
-    ${rec.length ? `<div class="sec-title" style="margin-top:20px"><h2>Phòng gần đây</h2></div>
-      <div class="plist" style="box-shadow:none;border:1px solid var(--line)">${rec.map(r => `
-        <div class="prow"><button class="tap" onclick="runBusy(this,()=>openRoomByKey('${r.id}','${r.key}'))">
-          <div class="av" style="background:hsl(${hue(r.name)} 55% 46%)">${esc(initials(r.name))}</div>
-          <div style="min-width:0"><div class="nm">${esc(r.name)}${room && room.id === r.id ? ' <span class="tag">Đang ở</span>' : ''}</div>
-          <div class="meta">#${esc(r.id)} · ${r.admin ? 'Quản lý' : 'Chỉ xem'}</div></div></button>
-          <button class="x" style="width:36px;height:36px;color:var(--muted)" onclick="forgetRoom('${r.id}')" aria-label="Quên phòng">✕</button></div>`).join('')}</div>` : ''}
-    ${room ? '' : `<p class="small" style="margin:16px 0 0">Không vào phòng thì dữ liệu chỉ lưu trên máy này.</p>`}`);
+      <button class="btn ghost" onclick="openJoin()">🔑 Nhập mã</button></div>
+    ${rec.length ? `<div class="sec-title"><h2>Phòng của bạn · ${rec.length}</h2></div>
+      <div class="plist">${rec.map(r => roomRow(r, true)).join('')}</div>` : ''}
+    <div class="sec-title"><h2>Phòng hiện có <span id="roomCount"></span></h2></div>
+    <div class="add-row search"><input id="lobbyQ" type="search" placeholder="🔍 Tìm theo tên nhóm hoặc mã phòng" autocomplete="off"
+      value="${esc(lobbyQ)}" oninput="lobbyQ=this.value;renderRoomList()"></div>
+    <div id="roomList" style="margin-top:10px"></div>
+    <button class="btn ghost block" style="margin-top:18px" onclick="goLocal()">📱 Dùng trên máy này, không vào phòng</button>
+    <div class="tip">💡 <span>Chạm vào một phòng rồi nhập mật khẩu do người quản lý gửi. Phòng đã vào sẽ nằm ở mục "Phòng của bạn", lần sau chạm là vào luôn.</span></div>`;
+}
+function renderRoomList() {
+  const el = document.getElementById('roomList'); if (!el) return;
+  const cnt = document.getElementById('roomCount');
+  const box = html => `<div class="card small muted" style="text-align:center">${html}</div>`;
+  if (lobbyErr) { el.innerHTML = box(`⚠️ ${esc(lobbyErr)}<br><button class="link" style="margin-top:8px" onclick="retryRooms()">Thử lại</button>`); return; }
+  if (!lobbyRooms) { el.innerHTML = box('<span class="spin"></span>Đang tải danh sách phòng…'); return; }
+  const mine = new Set(recentRooms().map(r => r.id));
+  const others = lobbyRooms.filter(r => !mine.has(r.id));
+  if (cnt) cnt.textContent = others.length ? '· ' + others.length : '';
+  const q = fold(lobbyQ.trim());
+  const list = q ? others.filter(r => fold(r.name).includes(q) || r.id.includes(q)) : others;
+  el.innerHTML = list.length ? `<div class="plist">${list.map(r => roomRow(r, false)).join('')}</div>`
+    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : others.length || !lobbyRooms.length ? 'Chưa có phòng nào — bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
 }
 function suggestId(name) { return (normId(name).slice(0, 20) || 'nhom') + '-' + (100 + Math.floor(Math.random() * 900)); }
 function openCreate() {
@@ -981,17 +1048,20 @@ function openCreate() {
     <div class="field"><label>Mã quản lý <span class="hint-i">— chỉ người xếp sân giữ</span></label>
       <input type="text" id="rAdm" maxlength="40" placeholder="ít nhất 4 ký tự, khác mật khẩu" autocapitalize="off" autocomplete="off"></div>
     ${has ? `<label class="check"><input type="checkbox" id="rCopy" checked> Dùng danh sách ${S.players.length} người chơi đang có trên máy</label>` : ''}
-    <div class="row2"><button class="btn" onclick="openRoomList()">Quay lại</button>
+    <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
       <button class="btn primary" onclick="runBusy(this,()=>createRoom(v('rName'),v('rId'),v('rPw'),v('rAdm'),!!(document.getElementById('rCopy')||{}).checked))">Tạo phòng</button></div>
     <p class="small" style="margin:12px 0 0">⚠️ Hãy ghi nhớ mật khẩu và mã quản lý — không thể khôi phục nếu quên.</p>`);
 }
 const v = id => (document.getElementById(id) || { value: '' }).value.trim();
-function openJoin(prefill) {
-  openSheet(`<h3>🔑 Vào phòng</h3><p>Nhập mã phòng và mật khẩu do người quản lý gửi.</p>
-    <div class="field"><label>Mã phòng</label><input type="text" id="jId" maxlength="30" autocapitalize="off" value="${esc(prefill || '')}"></div>
-    <div class="field"><label>Mật khẩu</label><input type="text" id="jPw" maxlength="40" autocapitalize="off" autocomplete="off"></div>
-    <div class="row2"><button class="btn" onclick="openRoomList()">Quay lại</button>
-      <button class="btn primary" onclick="runBusy(this,()=>joinRoom(v('jId'),v('jPw')))">Vào phòng</button></div>`);
+function openJoin(prefill, name) {
+  openSheet(`<h3>🔑 ${name ? 'Vào phòng ' + esc(name) : 'Vào phòng'}</h3>
+    <p>${name ? 'Nhập mật khẩu do người quản lý phòng gửi.' : 'Nhập mã phòng và mật khẩu do người quản lý gửi.'}</p>
+    <div class="field" ${name ? 'hidden' : ''}><label>Mã phòng</label><input type="text" id="jId" maxlength="30" autocapitalize="off" value="${esc(prefill || '')}"></div>
+    <div class="field"><label>Mật khẩu</label><input type="text" id="jPw" maxlength="40" autocapitalize="off" autocomplete="off"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('jGo').click()}"></div>
+    <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
+      <button class="btn primary" id="jGo" onclick="runBusy(this,()=>joinRoom(v('jId'),v('jPw')))">Vào phòng</button></div>`);
+  if (prefill) setTimeout(() => { const el = document.getElementById('jPw'); if (el) el.focus(); }, 320);
 }
 function openUnlock() {
   openSheet(`<h3>🔑 Mã quản lý</h3><p>Nhập mã quản lý để được xếp sân, thêm người, sửa kết quả trên máy này.</p>
@@ -1013,24 +1083,25 @@ function bootCloud() {
   if (!CLOUD_ON) return;
   const h = new URLSearchParams(location.hash.slice(1));
   const q = new URLSearchParams(location.search);
-  if (h.get('r') && h.get('k')) {
+  if (h.get('r') && h.get('k')) { // mở bằng link mời
     const id = normId(h.get('r')), key = h.get('k');
     history.replaceState(null, '', location.pathname + location.search);
-    openRoomByKey(id, key).then(() => toast('Đã vào phòng ' + room.name)).catch(e => { toast('⚠️ ' + cloudError(e)); if (room) subscribeRoom(); });
-    return;
-  }
-  if (room) {
-    cloudInit().then(async () => {
-      subscribeRoom();
-      const adm = await FB.get(dbRef('admins/' + room.key + '/' + myUid)).catch(() => null);
-      const isAdm = !!(adm && adm.exists());
-      if (isAdm !== !!room.admin) { room.admin = isAdm; rememberRoom(room); render(); }
-    }).catch(e => { roomStatus = 'offline'; renderHero(); toast('⚠️ ' + cloudError(e)); });
+    openRoomByKey(id, key).then(() => toast('Đã vào phòng ' + room.name)).catch(e => toast('⚠️ ' + cloudError(e)));
   } else if (q.get('room')) openJoin(normId(q.get('room')));
 }
 
 /* ================== RENDER ================== */
 function render() {
+  document.body.classList.toggle('lobby', lobby);
+  document.getElementById('nav').hidden = lobby;
+  if (lobby) {
+    renderHero();
+    document.getElementById('app').innerHTML = viewLobby();
+    document.getElementById('bar').innerHTML = '';
+    document.body.classList.remove('has-bar', 'ro');
+    renderRoomList(); watchRooms();
+    return;
+  }
   const act = activePlayers().length;
   const rounds = S.session.rounds, r = curRound();
   renderHero();
@@ -1051,11 +1122,17 @@ function render() {
 }
 function renderHero() {
   const act = activePlayers().length, rounds = S.session.rounds;
+  if (lobby) {
+    document.getElementById('hero').innerHTML = `
+      <div class="hero-top"><div class="logo">🏸</div>
+        <div class="ht"><h1>Xếp Sân Cầu Lông</h1><div class="rsub">Chọn phòng của nhóm bạn hoặc tạo phòng mới</div></div></div>`;
+    return;
+  }
   document.getElementById('hero').innerHTML = `
     <div class="hero-top"><div class="logo">🏸</div>
       <div class="ht"><h1>${room ? esc(room.name) : 'Xếp Sân Cầu Lông'}</h1>
         ${room ? `<div class="rsub"><i class="dot ${roomStatus}"></i>${room.admin ? '✏️ Quản lý' : '👁 Chỉ xem'} · #${esc(room.id)}</div>` : ''}</div>
-      <button class="room-btn" onclick="openRoomSheet()">${room ? '👥 Phòng' : '☁️ Phòng'}</button></div>
+      <button class="room-btn" onclick="openRoomSheet()">${room ? '👥 Phòng' : CLOUD_ON ? '☁️ Các phòng' : '☁️ Phòng'}</button></div>
     <div class="pills">
       <div class="pill"><b>${act}</b><span>có mặt</span></div>
       <div class="pill"><b>${Math.min(S.settings.courts, Math.max(1, Math.floor(act / 4)))}</b><span>sân</span></div>

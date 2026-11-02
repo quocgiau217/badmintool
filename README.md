@@ -15,6 +15,7 @@ Web app chạy trên điện thoại để xếp cặp đánh đôi cho nhóm 4�
 - **Ghi & sửa kết quả** (tuỳ chọn): chọn đội thắng hoặc nhập tỉ số, sửa được cả các vòng đã xong (tab Thống kê → Lịch sử → chạm vào trận); bảng xếp hạng tính thắng + hiệu số (HS) và **thống kê**: số trận, thắng, nghỉ; lịch sử các vòng.
 
 - **Phòng online** (tuỳ chọn): mỗi nhóm tạo 1 phòng có **mật khẩu xem** và **mã quản lý**. Cả nhóm mở link mời là thấy lịch, cập nhật trực tiếp; chỉ người có mã quản lý mới được xếp sân / sửa. Nhiều nhóm dùng chung 1 trang, dữ liệu tách riêng.
+- **Sảnh phòng**: khi bật phòng online, mở web sẽ thấy ngay danh sách **phòng hiện có** (tìm theo tên / mã), nút **Tạo phòng** và **Nhập mã**. Chạm 1 phòng → nhập mật khẩu để vào. Phòng đã vào được lưu ở mục *Phòng của bạn*, lần sau chạm là vào luôn. Vẫn có thể chọn *Dùng trên máy này* để dùng không cần phòng.
 
 ## Cách dùng
 1. Tab **Người chơi**: thêm tên, tích người có mặt, chọn trình độ.
@@ -36,10 +37,13 @@ Không bật thì app vẫn chạy bình thường, dữ liệu chỉ lưu trên
 4. Trong Realtime Database, mở tab **Rules**, xoá hết rồi dán nội dung file [`database.rules.json`](database.rules.json) → **Publish**. *(Bắt buộc — đây là phần bảo mật mật khẩu và quyền quản lý.)*
 5. **Project settings (⚙️) → Your apps → biểu tượng `</>`** → đặt tên app → **Register**. Copy đoạn `firebaseConfig`.
 6. Mở file [`config.js`](config.js), thay `window.FIREBASE_CONFIG = null;` bằng config vừa copy (nhớ có dòng `databaseURL`). Commit & push.
-7. Mở trang → nút **☁️ Phòng** → **Tạo phòng**.
+7. Mở trang → màn hình danh sách phòng → **Tạo phòng**.
+
+> Đã dán Rules từ bản cũ? Hãy dán lại nội dung mới của `database.rules.json` và **Publish** — bản mới cho phép xem danh sách phòng.
 
 ### Bảo mật hoạt động thế nào
-- Dữ liệu mỗi phòng nằm ở địa chỉ là mã băm SHA-256 của *(mã phòng + mật khẩu)* — không biết mật khẩu thì không tìm được, và không ai liệt kê được danh sách phòng.
+- Danh sách phòng (chỉ gồm **tên nhóm, mã phòng, ngày tạo**) là công khai để mọi người tìm phòng.
+- Dữ liệu mỗi phòng (người chơi, lịch, kết quả) nằm ở địa chỉ là mã băm SHA-256 của *(mã phòng + mật khẩu)* — không biết mật khẩu thì không tìm được.
 - Chỉ thiết bị đã nhập đúng **mã quản lý** mới được ghi; quy tắc này do máy chủ Firebase kiểm tra (file `database.rules.json`), không thể vượt qua bằng cách sửa code trên trình duyệt.
 - Link mời chứa khoá xem (không chứa mật khẩu gốc), ai có link là xem được — chỉ gửi trong nhóm.
 - Hãy dùng mật khẩu không quá dễ đoán. Mật khẩu và mã quản lý **không đổi được và không khôi phục được** — quên thì tạo phòng mới.

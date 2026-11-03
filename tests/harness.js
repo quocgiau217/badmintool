@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const FILES = ['state.js', 'algo.js', 'actions.js', 'money.js'];
+const FILES = ['state.js', 'algo.js', 'actions.js', 'money.js', 'me.js'];
 
 function loadApp() {
   const store = new Map();

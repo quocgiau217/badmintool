@@ -22,12 +22,12 @@ function giveCredit(id) {
   if (minPlayed > mine) S.session.credit[id] = (S.session.credit[id] || 0) + (minPlayed - mine);
 }
 function togglePlayer(id) {
-  const p = P(id); p.active = !p.active;
+  const p = P(id); p.active = !p.active; p.ct = nowSrv(); // lần sửa tay mới nhất thắng các lượt tự điểm danh cũ hơn
   if (p.active) giveCredit(id);
   save(); render();
 }
 function setAllActive(on) {
-  S.players.forEach(p => { if (on && !p.active) { p.active = true; giveCredit(p.id); } else if (!on) p.active = false; });
+  S.players.forEach(p => { p.ct = nowSrv(); if (on && !p.active) { p.active = true; giveCredit(p.id); } else if (!on) p.active = false; });
   save(); render();
 }
 function setLevel(id, lv) { P(id).level = lv; save(); render(); }

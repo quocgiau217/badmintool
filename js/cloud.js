@@ -47,6 +47,7 @@ function cloudInit() {
     if (emu) { FB.connectAuthEmulator(auth, `http://${emu.host}:${emu.authPort}`, { disableWarnings: true }); FB.connectDatabaseEmulator(fbDb, emu.host, emu.dbPort); }
     if (auth.authStateReady) await auth.authStateReady();
     myUid = auth.currentUser ? auth.currentUser.uid : (await FB.signInAnonymously(auth)).user.uid;
+    FB.onValue(dbRef('.info/serverTimeOffset'), s => { srvOffset = +s.val() || 0; });
     FB.onValue(dbRef('.info/connected'), s => { roomStatus = s.val() ? 'online' : 'offline'; lobby ? renderLobbyStats() : renderHero(); });
   })();
   cloudReady.catch(() => { cloudReady = null; });
@@ -100,6 +101,7 @@ function applyRemoteStr(s) {
   const clean = sanitizeState(obj);
   S.players = clean.players; S.settings = clean.settings; S.session = clean.session;
   try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {}
+  applyCheckins();
   selSlot = null;
   render();
   return true;
@@ -112,7 +114,7 @@ function subscribeRoom() {
     if (!room || room.key !== key) return;
     const v = snap.val();
     if (!v) { // phòng đã bị quản lý xoá
-      const id = room.id; if (unsubRoom) unsubRoom(); unsubRoom = null;
+      const id = room.id; if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins();
       dropRoomLocal(id); room = null; lastRemote = ''; S = loadState(); lobby = true; selSlot = null; focusId = null;
       closeSheet(); render(); toast('Phòng này đã bị người quản lý xoá'); return;
     }
@@ -190,11 +192,12 @@ function enterRoom(info) {
   lastRemote = ''; selSlot = null; focusId = null;
   remoteV = 0; roomSynced = false; pushAgain = false;
   const id = room.id;
-  cloudInit().then(() => { if (room && room.id === id) subscribeRoom(); })
+  stopCheckins(); lastMySpot = null;
+  cloudInit().then(() => { if (room && room.id === id) { subscribeRoom(); subscribeCheckins(); } })
     .catch(() => { roomStatus = 'offline'; renderHero(); window.addEventListener('online', () => { if (room && room.id === id && !unsubRoom) enterRoomSync(); }, { once: true }); });
   closeSheet(); render(); window.scrollTo(0, 0);
 }
-function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) subscribeRoom(); }).catch(() => {}); }
+function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) { subscribeRoom(); subscribeCheckins(); } }).catch(() => {}); }
 // mất mạng: vẫn mở được phòng đã vào trên máy này, dùng dữ liệu đã lưu; có mạng lại sẽ tự đồng bộ
 function openRoomOffline(r) {
   enterRoom({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '', sport: r.sport });
@@ -251,7 +254,7 @@ async function unlockAdmin(code) {
   room.admin = true; rememberRoom(room); closeSheet(); render(); toast('🔓 Đã mở quyền quản lý');
 }
 function leaveRoom() {
-  if (unsubRoom) unsubRoom(); unsubRoom = null;
+  if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins();
   clearTimeout(pushT); if (room && room.admin) pushNow(); // gửi nốt thay đổi chưa kịp lưu
   room = null; lastRemote = '';
   S = loadState(); selSlot = null; focusId = null;
@@ -271,9 +274,9 @@ async function deleteRoom() {
   if (normId(v('delId')) !== room.id) throw new Error('Mã phòng chưa đúng');
   await cloudInit();
   const { id, key } = room;
-  if (unsubRoom) unsubRoom(); unsubRoom = null; clearTimeout(pushT);
+  if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins(); clearTimeout(pushT);
   try {
-    await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
+    await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['checkin/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
   } catch (e) {
     subscribeRoom();
     throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Không xoá được — phòng tạo từ bản cũ, hãy xoá trong Firebase Console' : cloudError(e));

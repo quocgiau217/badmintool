@@ -27,6 +27,7 @@ function render() {
   document.body.classList.toggle('has-bar', !!bar.innerHTML.trim());
   document.body.classList.toggle('ro', !canEdit());
   animNext = false;
+  checkMyTurn();
   const inp = document.getElementById('nameInput');
   if (inp) inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); quickAdd(); } };
 }
@@ -89,9 +90,10 @@ function viewPlayers() {
     <div class="add-row"><input id="nameInput" type="text" placeholder="Nhập tên người chơi…" enterkeyhint="done" autocomplete="off" maxlength="30">
       <button class="btn primary" onclick="quickAdd()" aria-label="Thêm">+</button></div>
     <div style="margin:8px 4px 0"><button class="link" onclick="bulkMode=true;render();document.getElementById('bulkInput').focus()">📋 Dán danh sách nhiều người (từ Zalo…)</button></div>`;
+  const me = meCard('players');
   if (!S.players.length) return `${add}<div class="empty" style="margin-top:20px"><div class="big">👥</div><h3>Chưa có người chơi</h3>
       <p>Thêm tên các thành viên trong nhóm.<br>Danh sách được lưu lại cho các buổi sau.</p></div>`;
-  return `${add}
+  return `${me}${add}
     <div class="sec-title"><h2>Có mặt · ${on.length}</h2>
       ${!ed ? '' : off.length ? `<button class="link" onclick="haptic();setAllActive(true)">Chọn tất cả</button>`
                    : `<button class="link" onclick="haptic();setAllActive(false)">Bỏ chọn hết</button>`}</div>
@@ -102,11 +104,12 @@ function viewPlayers() {
 
 function chip(id, ref, team) {
   const p = P(id), sel = selSlot && JSON.stringify(selSlot) === JSON.stringify(ref);
-  return `<button class="chip ${sel ? 'sel' : ''} ${focusId === id ? 'hl' : ''}" style="${team ? `--tc:var(--team-${team})` : ''}" onclick='${canEdit() ? `tapSlot(${JSON.stringify(ref)})` : `focusP("${id}")`}'>
+  return `<button class="chip ${sel ? 'sel' : ''} ${focusId === id ? 'hl' : ''} ${id === myPid() ? 'me' : ''}" style="${team ? `--tc:var(--team-${team})` : ''}" onclick='${canEdit() ? `tapSlot(${JSON.stringify(ref)})` : `focusP("${id}")`}'>
     ${avatar(p, 'sm')}<span class="nm">${esc(p.name)}</span>${S.settings.mode === 'balanced' ? `<span class="lvn">${p.level}</span>` : ''}</button>`;
 }
 
-function viewPlay() {
+function viewPlay() { return meCard('play') + viewPlayInner(); }
+function viewPlayInner() {
   const act = activePlayers().length, r = curRound();
   if (act < 4) return `<div class="card empty"><div class="big">${SP().emoji}</div><h3>Cần ít nhất 4 người</h3>
       <p>Hiện có ${act} người có mặt. Thêm người chơi hoặc bật "có mặt".</p>

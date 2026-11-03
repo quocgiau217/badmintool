@@ -411,3 +411,17 @@ nav .badge{position:absolute;top:6px;right:calc(50% - 22px);min-width:18px;heigh
 .sel{width:100%;height:50px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface-2);padding:0 12px;font:inherit;color:var(--text)}
 .qr{width:min(280px,80vw);aspect-ratio:1;border-radius:16px;background:#fff;padding:8px;box-shadow:var(--shadow);margin:4px auto 0;display:block}
 nav button{font-size:10.5px}
+
+/* ---------- thẻ "Tôi" ---------- */
+.me-card{display:flex;align-items:center;gap:10px;width:100%;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:12px;text-align:left;border:1.5px solid transparent}
+.me-card.in{border-color:var(--brand-soft)}
+.me-card.ask{border:1.5px dashed var(--brand);background:var(--brand-soft)}
+.me-card .me-ico{font-size:26px}
+.me-card .go{margin-left:auto;font-size:24px;color:var(--brand)}
+.me-card>div:not(.av){flex:1;min-width:0}
+.me-mid{flex:1;min-width:0}
+.me-mid .small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chip.me{box-shadow:0 0 0 2.5px var(--brand),0 2px 6px rgba(0,0,0,.12)}
+.me-name{font-weight:700;text-align:left;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.me-card .btn.sm{flex:none}
+.me-card .bell{width:36px;height:36px;background:var(--surface-2);font-size:16px}

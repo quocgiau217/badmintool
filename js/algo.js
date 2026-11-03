@@ -1,21 +1,29 @@
 /* ================== ALGORITHM ================== */
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-// Chia `chosen` (bội số của 4) thành các sân: [a1,a2 | b1,b2] mỗi sân.
+// Số người mỗi đội: đánh đôi 2, đánh đơn 1; mỗi sân 2 đội
+const teamSize = () => (S.settings.format === 'singles' ? 1 : 2);
+const perCourt = () => 2 * teamSize();
+// Chia `chosen` (bội số của số người mỗi sân) thành các sân.
 // Chi phí: trùng đồng đội (nặng), trùng đối thủ, chênh trình 2 đội, chênh trình trên sân.
 function bestArrangement(chosen, st, balanced, iters = 200) {
-  const n = chosen.length, nc = n / 4;
+  const T = teamSize(), K = 2 * T, n = chosen.length, nc = n / K;
   const SK = skillMap(), L = chosen.map(id => (SK && SK[id] != null ? SK[id] : P(id).level));
   const PM = new Float64Array(n * n), OM = new Float64Array(n * n);
   for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) if (x !== y) {
     const k = pairKey(chosen[x], chosen[y]);
     PM[x * n + y] = st.partner[k] || 0; OM[x * n + y] = st.opp[k] || 0;
   }
-  const sq = v => v * v;
+  const sq = v => v * v, oppW = T === 1 ? 40 : 15; // đánh đơn: tránh gặp lại cùng đối thủ là quan trọng nhất
   const courtCost = (p, c) => {
-    const a1 = p[4 * c], a2 = p[4 * c + 1], b1 = p[4 * c + 2], b2 = p[4 * c + 3];
+    const o = K * c;
+    if (T === 1) {
+      const a = p[o], b = p[o + 1];
+      return oppW * sq(OM[a * n + b]) + (balanced ? 45 * sq(L[a] - L[b]) : 0);
+    }
+    const a1 = p[o], a2 = p[o + 1], b1 = p[o + 2], b2 = p[o + 3];
     let cost = 100 * (sq(PM[a1 * n + a2]) + sq(PM[b1 * n + b2]))
-      + 15 * (sq(OM[a1 * n + b1]) + sq(OM[a1 * n + b2]) + sq(OM[a2 * n + b1]) + sq(OM[a2 * n + b2]));
+      + oppW * (sq(OM[a1 * n + b1]) + sq(OM[a1 * n + b2]) + sq(OM[a2 * n + b1]) + sq(OM[a2 * n + b2]));
     if (balanced) {
       cost += 45 * sq(L[a1] + L[a2] - L[b1] - L[b2]); // bình phương: lệch nhiều bị phạt rất nặng
       cost += 8 * (Math.max(L[a1], L[a2], L[b1], L[b2]) - Math.min(L[a1], L[a2], L[b1], L[b2]));
@@ -33,8 +41,8 @@ function bestArrangement(chosen, st, balanced, iters = 200) {
     for (let pass = 0, improved = true; improved && pass < 4; pass++) {
       improved = false;
       for (let x = 0; x < n; x++) for (let y = x + 1; y < n; y++) {
-        const cx = x >> 2, cy = y >> 2;
-        if (cx === cy && ((x & 3) >> 1) === ((y & 3) >> 1)) continue; // cùng đội: không đổi gì
+        const cx = Math.floor(x / K), cy = Math.floor(y / K);
+        if (cx === cy && Math.floor((x % K) / T) === Math.floor((y % K) / T)) continue; // cùng đội: không đổi gì
         [p[x], p[y]] = [p[y], p[x]];
         const nx = courtCost(p, cx), ny = cx === cy ? 0 : courtCost(p, cy);
         const old = cx === cy ? cc[cx] : cc[cx] + cc[cy];
@@ -47,8 +55,8 @@ function bestArrangement(chosen, st, balanced, iters = 200) {
   }
   const courts = [];
   for (let c = 0; c < nc; c++) {
-    const g = i => chosen[best[4 * c + i]];
-    courts.push({ a: [g(0), g(1)], b: [g(2), g(3)], winner: null });
+    const g = i => chosen[best[K * c + i]];
+    courts.push({ a: Array.from({ length: T }, (_, i) => g(i)), b: Array.from({ length: T }, (_, i) => g(T + i)), winner: null });
   }
   return courts;
 }
@@ -57,8 +65,8 @@ function bestArrangement(chosen, st, balanced, iters = 200) {
 function buildRound(history) {
   const act = activePlayers();
   const st = computeStats(history);
-  const nCourts = Math.min(S.settings.courts, Math.floor(act.length / 4));
-  const need = nCourts * 4;
+  const nCourts = Math.min(S.settings.courts, Math.floor(act.length / perCourt()));
+  const need = nCourts * perCourt();
   const credit = S.session.credit || {};
   // Ưu tiên: ít trận nhất -> nghỉ nhiều vòng liên tiếp -> ngẫu nhiên
   const order = shuffle(act).sort((x, y) => {
@@ -83,7 +91,7 @@ function finishCourt(ci) {
   const rounds = S.session.rounds, games = rounds.filter(x => x.done).length;
   rounds.splice(rounds.length - 1, 0, { no: games + 1, courts: [Object.assign({}, c, { end: nowSrv() })], resting: [], done: true, q: true });
   const act = new Set(activePlayers().map(p => p.id)), out = [...c.a, ...c.b].filter(id => act.has(id));
-  const queue = r.resting.filter(id => act.has(id)), need = 4;
+  const queue = r.resting.filter(id => act.has(id)), need = perCourt();
   const st = computeStats(rounds), credit = S.session.credit || {};
   let pick = queue.slice(0, need);
   if (pick.length < need) { // hàng chờ không đủ: lấy thêm người vừa đánh, ưu tiên ai ít trận
@@ -136,7 +144,7 @@ function openCourt(ci) {
     <div class="field"><label>Tên sân</label><input type="text" id="cName" maxlength="20" value="${esc(((S.settings.courtNames || [])[ci] || '').trim())}" placeholder="Sân ${ci + 1}"
       onkeydown="if(event.key==='Enter'){event.preventDefault();setCourtName(${ci},this.value);closeSheet()}"></div>
     ${r.courts.length > 1 ? `<button class="btn danger block" onclick="removeCourt(${ci})">➖ Bỏ sân này khỏi vòng ${r.no}</button>
-      <p class="small" style="margin:8px 2px 0">4 người trên sân sẽ chuyển sang nghỉ, các vòng sau xếp với ${r.courts.length - 1} sân.</p>` : ''}
+      <p class="small" style="margin:8px 2px 0">${perCourt()} người trên sân sẽ chuyển sang nghỉ, các vòng sau xếp với ${r.courts.length - 1} sân.</p>` : ''}
     <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
       <button class="btn primary" onclick="setCourtName(${ci},v('cName'));closeSheet();toast('Đã đổi tên sân')">Lưu</button></div>`);
 }
@@ -149,15 +157,15 @@ function removeCourt(ci) {
   syncCourtNames(); selSlot = null; closeSheet(); save(); render();
   toast(`Đã bỏ ${cName(c, ci)} — còn ${r.courts.length} sân`);
 }
-// mở thêm 1 sân ngay trong vòng: lấy 4 người nghỉ ưu tiên (ít trận nhất)
+// mở thêm 1 sân ngay trong vòng: lấy người nghỉ ưu tiên (ít trận nhất)
 function addCourt() {
   const r = curRound(); if (!r) return;
   if (r.courts.length >= MAX_COURTS) { toast(`Tối đa ${MAX_COURTS} sân`); return; }
-  if (r.resting.length < 4) { toast('Cần ít nhất 4 người đang nghỉ để mở thêm sân'); return; }
+  if (r.resting.length < perCourt()) { toast(`Cần ít nhất ${perCourt()} người đang nghỉ để mở thêm sân`); return; }
   haptic();
   const st = computeStats(S.session.rounds.slice(0, -1)), credit = S.session.credit || {};
   const score = id => (st.played[id] || 0) + (credit[id] || 0);
-  const pick = shuffle(r.resting).sort((x, y) => (score(x) - score(y)) || ((st.satStreak[y] || 0) - (st.satStreak[x] || 0))).slice(0, 4);
+  const pick = shuffle(r.resting).sort((x, y) => (score(x) - score(y)) || ((st.satStreak[y] || 0) - (st.satStreak[x] || 0))).slice(0, perCourt());
   const [c] = bestArrangement(pick, st, S.settings.mode === 'balanced');
   c.name = courtLabel(r.courts.length); c.start = nowSrv();
   r.courts.push(c);
@@ -168,7 +176,7 @@ function addCourt() {
 }
 
 function generateRound() {
-  if (activePlayers().length < 4) { toast('Cần ít nhất 4 người đang có mặt'); return; }
+  if (activePlayers().length < perCourt()) { toast(`Cần ít nhất ${perCourt()} người đang có mặt`); return; }
   if (curRound()) S.session.rounds.pop(); // xếp lại vòng hiện tại
   S.session.rounds.push(startCourts(buildRound(S.session.rounds)));
   S.session.plan = []; // lịch dự kiến sẽ tính lại
@@ -181,20 +189,20 @@ function generateRound() {
 function planSig() {
   const bal = S.settings.mode === 'balanced';
   return JSON.stringify([
-    activePlayers().map(p => bal ? p.id + lvOf(p) : p.id), S.settings.courts, S.settings.mode, S.session.credit,
+    activePlayers().map(p => bal ? p.id + lvOf(p) : p.id), S.settings.courts, S.settings.mode, S.settings.format, S.session.credit,
     S.session.rounds.map(r => [r.courts.map(c => [c.a, c.b]), r.resting])
   ]);
 }
 function planValid(rd) {
   const act = new Set(activePlayers().map(p => p.id));
   const ids = [...rd.courts.flatMap(c => [...c.a, ...c.b]), ...rd.resting];
-  const nCourts = Math.min(S.settings.courts, Math.floor(act.size / 4));
+  const nCourts = Math.min(S.settings.courts, Math.floor(act.size / perCourt()));
   return rd.courts.length === nCourts && ids.length === act.size && ids.every(id => act.has(id));
 }
 // Giữ nguyên các vòng dự kiến còn hợp lệ, chỉ bổ sung cho đủ số vòng
 function ensurePlan(force) {
   if (room && !room.admin) return; // người xem dùng lịch do quản lý tạo
-  if (!curRound() || activePlayers().length < 4 || isQueue()) { if ((S.session.plan || []).length) { S.session.plan = []; save(); } return; }
+  if (!curRound() || activePlayers().length < perCourt() || isQueue()) { if ((S.session.plan || []).length) { S.session.plan = []; save(); } return; }
   const sig = planSig();
   if (!force && S.session.planSig === sig && (S.session.plan || []).length === S.settings.preview) return;
   if (force || S.session.planSig !== sig) S.session.plan = [];

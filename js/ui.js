@@ -88,14 +88,23 @@ function openSettings() {
     <button class="btn primary" onclick="closeSheet();generateRound();toast('Đã xếp lại theo cài đặt mới')">Xếp lại ngay</button></div>`);
 }
 function setCourts(c) { S.settings.courts = Math.max(1, Math.min(MAX_COURTS, c)); save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
+function setFormat(f) {
+  if (S.settings.format === f) return;
+  S.settings.format = f; save();
+  if (curRound()) { generateRound(); toast(f === 'singles' ? 'Đã chuyển sang đánh đơn và xếp lại' : 'Đã chuyển sang đánh đôi và xếp lại'); } else render();
+  if (document.getElementById('sheet').classList.contains('show')) openSettings();
+}
 function setFlow(f) { S.settings.flow = f; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
 const fmtElapsed = t => { const s = Math.max(0, Math.floor((nowSrv() - t) / 1000)); return `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function setMode(m) { S.settings.mode = m; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
 function settingsHtml() {
-  const act = activePlayers().length, maxC = Math.max(1, Math.floor(act / 4));
-  const used = Math.min(S.settings.courts, maxC), playing = used * 4, rest = Math.max(0, act - playing);
+  const act = activePlayers().length, K = perCourt(), maxC = Math.max(1, Math.floor(act / K));
+  const used = Math.min(S.settings.courts, maxC), playing = used * K, rest = Math.max(0, act - playing);
   return `
     <div class="field"><label>Môn chơi</label>${sportPicker(SP().key, 'setSport')}</div>
+    <div class="field"><label>Hình thức</label><div class="seg">
+      <button class="${S.settings.format !== 'singles' ? 'on' : ''}" onclick="setFormat('doubles')">👥 Đánh đôi</button>
+      <button class="${S.settings.format === 'singles' ? 'on' : ''}" onclick="setFormat('singles')">👤 Đánh đơn</button></div></div>
     <div class="field"><label>Số sân thuê được hôm nay</label><div class="stepper">
       <button onclick="setCourts(${S.settings.courts - 1})" ${S.settings.courts <= 1 ? 'disabled' : ''} aria-label="Bớt sân">−</button>
       <div><b>${S.settings.courts}</b><span>sân</span></div>
@@ -115,6 +124,6 @@ function settingsHtml() {
       📈 Trình độ tự cập nhật theo kết quả thắng/thua</label>
     <div class="field" ${S.settings.flow === 'queue' ? 'hidden' : ''}><label>Xem trước lịch</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
       `<button class="${S.settings.preview === n ? 'on' : ''}" onclick="setPreview(${n})">${n ? n + ' vòng' : 'Tắt'}</button>`).join('')}</div></div>
-    ${act >= 4 ? `<div class="info">ℹ️ <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.
+    ${act >= K ? `<div class="info">ℹ️ <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.
       ${S.settings.courts > maxC ? `<br>Có ${S.settings.courts} sân nhưng chỉ đủ người cho ${maxC} sân.` : ''}</div></div>` : ''}`;
 }

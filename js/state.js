@@ -57,7 +57,7 @@ function sanitizeState(raw) {
   }).slice(0, 200);
   const settings = {
     courts: int(set.courts, 1, 10, 2), mode: oneOf(set.mode, ['balanced', 'random'], 'balanced'),
-    preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), autoLevel: !!set.autoLevel, flow: oneOf(set.flow, ['rounds', 'queue'], 'rounds'), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
+    preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), format: oneOf(set.format, ['doubles', 'singles'], 'doubles'), autoLevel: !!set.autoLevel, flow: oneOf(set.flow, ['rounds', 'queue'], 'rounds'), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
     courtNames: arr(set.courtNames).slice(0, 10).map(x => str(x, 20)),
   };
   const bank = obj(set.bank);
@@ -108,8 +108,7 @@ function computeStats(rounds) {
     const inRound = new Set();
     r.courts.forEach(c => {
       [...c.a, ...c.b].forEach(id => { st.played[id] = (st.played[id] || 0) + 1; inRound.add(id); st.satStreak[id] = 0; });
-      st.partner[pairKey(c.a[0], c.a[1])] = (st.partner[pairKey(c.a[0], c.a[1])] || 0) + 1;
-      st.partner[pairKey(c.b[0], c.b[1])] = (st.partner[pairKey(c.b[0], c.b[1])] || 0) + 1;
+      [c.a, c.b].forEach(t => { if (t.length === 2) { const k = pairKey(t[0], t[1]); st.partner[k] = (st.partner[k] || 0) + 1; } });
       c.a.forEach(x => c.b.forEach(y => { st.opp[pairKey(x, y)] = (st.opp[pairKey(x, y)] || 0) + 1; }));
       if (c.winner) (c.winner === 'a' ? c.a : c.b).forEach(id => { st.wins[id] = (st.wins[id] || 0) + 1; });
       if (c.score) { const d = c.score[0] - c.score[1];

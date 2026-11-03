@@ -8,6 +8,8 @@
       "firebase.json",
       "database.rules.json",
       "README.md",
+      "DESIGN.md",
+      "PRODUCT.md",
       "package.json",
       "tests/**",
       "**/.*"

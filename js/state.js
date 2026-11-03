@@ -5,6 +5,7 @@ const defaultState = () => ({
   players: [],                       // {id, name, level(1-5), active}
   settings: { courts: 2, mode: 'balanced', preview: 3 }, // mode: balanced | random; preview: số vòng xem trước
   session: { rounds: [], credit: {} }, // rounds: {no, courts:[{a:[id,id], b:[id,id], winner}], resting:[ids], done}
+  archive: [],                       // tổng kết các buổi trước (rating.js)
   tab: 'players'
 });
 let room = null; // phòng online đang vào: {id, name, key, admin, pw}
@@ -50,13 +51,13 @@ function sanitizeState(raw) {
   const seen = new Set();
   const players = arr(raw.players).filter(p => isId(obj(p).id) && !seen.has(p.id) && seen.add(p.id)).map(p => {
     const o = { id: p.id, name: str(p.name, 40).trim() || '?', level: int(p.level, 1, 5, 3), active: !!p.active };
-    if (p.r0 != null) o.r0 = num(p.r0, 1000);
+    if (p.r0 != null) o.r0 = Math.min(3000, Math.max(0, num(p.r0, 1000)));
     if (p.ct != null) o.ct = num(p.ct);
     return o;
   }).slice(0, 200);
   const settings = {
     courts: int(set.courts, 1, 10, 2), mode: oneOf(set.mode, ['balanced', 'random'], 'balanced'),
-    preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), flow: oneOf(set.flow, ['rounds', 'queue'], 'rounds'), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
+    preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), autoLevel: !!set.autoLevel, flow: oneOf(set.flow, ['rounds', 'queue'], 'rounds'), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
     courtNames: arr(set.courtNames).slice(0, 10).map(x => str(x, 20)),
   };
   const bank = obj(set.bank);
@@ -76,10 +77,16 @@ function sanitizeState(raw) {
       paid: idMap(m.paid, v => (v ? true : undefined)), exclude: idMap(m.exclude, v => (v ? true : undefined)),
     };
   }
-  return { players, settings, session };
+  const archive = arr(raw.archive).slice(0, 100).map(a => {
+    a = obj(a);
+    return { d: num(a.d), sport: oneOf(a.sport, ['badminton', 'pickleball'], 'badminton'), n: int(a.n, 0, 9999, 0), games: int(a.games, 0, 99999, 0),
+      p: idMap(a.p, v => (Array.isArray(v) ? [int(v[0], 0, 9999, 0), int(v[1], 0, 9999, 0), int(v[2], -99999, 99999, 0)] : undefined)),
+      pairs: (() => { const o = {}; Object.entries(obj(a.pairs)).forEach(([k, v]) => { const [x, y] = k.split('|'); if (isId(x) && isId(y) && Array.isArray(v)) o[k] = [int(v[0], 0, 9999, 0), int(v[1], 0, 9999, 0)]; }); return o; })() };
+  });
+  return { players, settings, session, archive };
 }
 let S = loadState();
-const save = () => { try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {} if (room && room.admin) schedulePush(); };
+const save = () => { R_CACHE = null; try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {} if (room && room.admin) schedulePush(); };
 let selSlot = null;     // ô đang chọn để đổi chỗ: {c, t, i} hoặc {rest:i}
 let animNext = false;   // hiệu ứng khi vừa xếp vòng mới
 let bulkMode = false;   // ô dán nhiều tên

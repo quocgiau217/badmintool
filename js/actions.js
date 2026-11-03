@@ -30,7 +30,11 @@ function setAllActive(on) {
   S.players.forEach(p => { p.ct = nowSrv(); if (on && !p.active) { p.active = true; giveCredit(p.id); } else if (!on) p.active = false; });
   save(); render();
 }
-function setLevel(id, lv) { P(id).level = lv; save(); render(); }
+function setLevel(id, lv) {
+  const p = P(id); p.level = lv;
+  if (autoLv()) { const R = ratingsNow(); p.r0 = r0Of(p) + baseRating(lv) - R[id]; } // đặt tay: điểm hiện tại về đúng mức đã chọn
+  save(); render();
+}
 function removePlayer(id) {
   const used = S.session.rounds.some(r => r.courts.some(c => [...c.a, ...c.b].includes(id)));
   if (used) { closeSheet(); toast('Người này đã chơi trong buổi — hãy chuyển sang "vắng" thay vì xoá'); return; }
@@ -55,7 +59,8 @@ function finishRound() {
   toast(`Bắt đầu vòng ${S.session.rounds.length}`);
 }
 function newSession() {
-  confirmSheet('Bắt đầu buổi mới?', 'Lịch sử và thống kê buổi hiện tại sẽ bị xoá. Danh sách người chơi vẫn được giữ.', 'Bắt đầu lại', () => {
+  confirmSheet('Bắt đầu buổi mới?', 'Tổng kết buổi này được lưu vào thống kê "Tất cả". Lịch đấu, kết quả chi tiết và khoản chi của buổi sẽ được xoá. Danh sách người chơi vẫn giữ.', 'Bắt đầu buổi mới', () => {
+    closeSession();
     S.session = { rounds: [], credit: {}, started: Date.now() }; selSlot = null; save(); render(); toast('Đã tạo buổi mới');
   });
 }

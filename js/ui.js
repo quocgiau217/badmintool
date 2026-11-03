@@ -5,7 +5,7 @@ function hue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)
 function initials(name) { const w = name.trim().split(/\s+/); return (w[w.length - 1] || '?').charAt(0); }
 function avatar(p, cls = '') { return `<div class="av ${cls}" style="background:hsl(${hue(p.name)} 55% 46%)">${esc(initials(p.name))}</div>`; }
 const dots = n => `<span class="dots">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'f' : ''}"></i>`).join('')}</span>`;
-const lvBadge = p => `<span class="lv lv${p.level}">${dots(p.level)} ${p.level}</span>`;
+const lvBadge = p => { const l = lvOf(p); return `<span class="lv lv${l}">${dots(l)} ${l}</span>`; };
 
 const ICON = {
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -111,6 +111,8 @@ function settingsHtml() {
       <button class="${S.settings.mode === 'balanced' ? 'on' : ''}" onclick="setMode('balanced')"><b>⚖️ Cân trình</b><span>2 đội ngang sức</span></button>
       <button class="${S.settings.mode === 'random' ? 'on' : ''}" onclick="setMode('random')"><b>🎲 Ngẫu nhiên</b><span>Bỏ qua trình độ</span></button>
     </div></div>
+    <label class="check" style="margin:-4px 2px 14px"><input type="checkbox" ${S.settings.autoLevel ? 'checked' : ''} onchange="setAutoLevel(this.checked)">
+      📈 Trình độ tự cập nhật theo kết quả thắng/thua</label>
     <div class="field" ${S.settings.flow === 'queue' ? 'hidden' : ''}><label>Xem trước lịch</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
       `<button class="${S.settings.preview === n ? 'on' : ''}" onclick="setPreview(${n})">${n ? n + ' vòng' : 'Tắt'}</button>`).join('')}</div></div>
     ${act >= 4 ? `<div class="info">ℹ️ <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.

@@ -5,7 +5,7 @@ function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { co
 // Chi phí: trùng đồng đội (nặng), trùng đối thủ, chênh trình 2 đội, chênh trình trên sân.
 function bestArrangement(chosen, st, balanced, iters = 200) {
   const n = chosen.length, nc = n / 4;
-  const L = chosen.map(id => P(id).level);
+  const SK = skillMap(), L = chosen.map(id => (SK && SK[id] != null ? SK[id] : P(id).level));
   const PM = new Float64Array(n * n), OM = new Float64Array(n * n);
   for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) if (x !== y) {
     const k = pairKey(chosen[x], chosen[y]);
@@ -181,7 +181,7 @@ function generateRound() {
 function planSig() {
   const bal = S.settings.mode === 'balanced';
   return JSON.stringify([
-    activePlayers().map(p => bal ? p.id + p.level : p.id), S.settings.courts, S.settings.mode, S.session.credit,
+    activePlayers().map(p => bal ? p.id + lvOf(p) : p.id), S.settings.courts, S.settings.mode, S.session.credit,
     S.session.rounds.map(r => [r.courts.map(c => [c.a, c.b]), r.resting])
   ]);
 }

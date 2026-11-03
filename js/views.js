@@ -1,5 +1,6 @@
 /* ================== RENDER ================== */
 function render() {
+  R_CACHE = null;
   document.body.classList.toggle('lobby', lobby);
   document.body.classList.toggle('pb', !lobby && SP().key === 'pickleball');
   const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = !lobby && SP().key === 'pickleball' ? '#1d4fa3' : '#0e7a57';
@@ -79,7 +80,7 @@ function viewPlayers() {
   const row = p => `
     <div class="prow ${p.active ? '' : 'off'}">
       <button class="tap" onclick="${ed ? `editPlayer('${p.id}')` : `focusP('${p.id}');goTab('play')`}">${avatar(p)}
-        <div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="meta">${LV[p.level]}</div></div></button>
+        <div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="meta">${LV[lvOf(p)]}${autoLv() ? ` · ⭐ ${fmtRating(ratingsNow()[p.id] || r0Of(p))}` : ''}</div></div></button>
       <button onclick="${ed ? `editPlayer('${p.id}')` : ''}">${lvBadge(p)}</button>
       ${ed ? `<button class="toggle ${p.active ? 'on' : ''}" onclick="haptic();togglePlayer('${p.id}')" aria-label="Có mặt"></button>` : ''}
     </div>`;
@@ -106,7 +107,7 @@ function viewPlayers() {
 function chip(id, ref, team) {
   const p = P(id), sel = selSlot && JSON.stringify(selSlot) === JSON.stringify(ref);
   return `<button class="chip ${sel ? 'sel' : ''} ${focusId === id ? 'hl' : ''} ${id === myPid() ? 'me' : ''}" style="${team ? `--tc:var(--team-${team})` : ''}" onclick='${canEdit() ? `tapSlot(${JSON.stringify(ref)})` : `focusP("${id}")`}'>
-    ${avatar(p, 'sm')}<span class="nm">${esc(p.name)}</span>${S.settings.mode === 'balanced' ? `<span class="lvn">${p.level}</span>` : ''}</button>`;
+    ${avatar(p, 'sm')}<span class="nm">${esc(p.name)}</span>${S.settings.mode === 'balanced' ? `<span class="lvn">${lvOf(p)}</span>` : ''}</button>`;
 }
 
 function viewPlay() { return meCard('play') + viewPlayInner(); }
@@ -123,7 +124,7 @@ function viewPlayInner() {
       <p>Bấm nút bên dưới để chia cặp. Ai chơi ít sẽ được ưu tiên vào sân, hạn chế trùng đồng đội.</p></div>`;
   const bal = S.settings.mode === 'balanced', q = isQueue();
   const courts = r.courts.map((c, ci) => {
-    const sum = t => c[t].reduce((s, id) => s + P(id).level, 0);
+    const sum = t => c[t].reduce((s, id) => s + lvOf(P(id)), 0);
     const half = t => `<div class="half ${t} ${c.winner === t ? 'won' : c.winner ? 'lost' : ''}">
         <div class="team-tag">ĐỘI ${t === 'a' ? 'A' : 'B'}</div>
         ${c[t].map((id, i) => chip(id, { c: ci, t, i }, t)).join('')}
@@ -181,8 +182,40 @@ function upcomingHtml(r) {
     <div class="tip" ${canEdit() ? '' : 'hidden'}>ℹ️ <span>Lịch dự kiến giữ nguyên khi bấm "Vòng tiếp". Lịch tự tính lại nếu có người đến/về, đổi chỗ hoặc đổi cài đặt.</span></div>`;
 }
 
+let statsRange = 'session';
+function statsSeg() {
+  return `<div class="seg sm" style="margin-bottom:12px">${[['session', 'Buổi này'], ['month', 'Tháng này'], ['all', 'Tất cả']].map(([k, l]) =>
+    `<button class="${statsRange === k ? 'on' : ''}" onclick="statsRange='${k}';render()">${l}</button>`).join('')}</div>`;
+}
+function pairsHtml(list, title) {
+  if (!list.length) return '';
+  return `<div class="sec-title"><h2>${title}</h2></div><div class="plist">${list.map((x, i) => `<div class="lb">
+    <div class="rank">${['🥇', '🥈', '🥉'][i]}</div><div class="mid"><div class="nm">${esc(P(x.ids[0]).name)} & ${esc(P(x.ids[1]).name)}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(x.rate * 100)}%"></div></div></div>
+    <div class="nums"><div><b>${x.w}/${x.g}</b>thắng</div><div><b>${Math.round(x.rate * 100)}%</b>tỉ lệ</div></div></div>`).join('')}</div>`;
+}
+function viewStatsLong() {
+  const ag = aggregate(statsRange), R = ratingsNow();
+  const ids = Object.keys(ag.players).filter(id => S.players.some(p => p.id === id));
+  if (!ids.length) return `${statsSeg()}<div class="card empty"><div class="big">📅</div><h3>Chưa có buổi nào ${statsRange === 'month' ? 'trong tháng này' : ''}</h3>
+    <p>Mỗi lần bấm "Bắt đầu buổi mới", tổng kết buổi cũ sẽ được lưu vào đây.</p></div>`;
+  const rows = ids.map(id => ({ p: P(id), ...ag.players[id] })).sort((a, b) => (b.w - a.w) || (b.w / b.pl - a.w / a.pl) || (b.df - a.df) || (b.pl - a.pl));
+  const anyW = rows.some(r => r.w);
+  return `${statsSeg()}
+    <div class="tiles"><div class="tile"><b>${ag.sessions}</b><span>buổi</span></div><div class="tile"><b>${ag.games}</b><span>trận đấu</span></div><div class="tile"><b>${ids.length}</b><span>người chơi</span></div></div>
+    <div class="sec-title"><h2>${anyW ? 'Bảng xếp hạng' : 'Số trận mỗi người'}</h2></div>
+    <div class="plist">${rows.map((r, i) => { const rate = r.pl ? Math.round(r.w / r.pl * 100) : 0; return `<div class="lb">
+      <div class="rank ${anyW && i < 3 && r.w ? 'top' : ''}">${anyW && i < 3 && r.w ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>${avatar(r.p, 'sm')}
+      <div class="mid"><div class="nm">${esc(r.p.name)}</div><div class="meta">${r.s} buổi${autoLv() && R[r.p.id] != null ? ` · ⭐ ${fmtRating(R[r.p.id])}` : ''}</div>
+        ${anyW ? `<div class="bar-track"><div class="bar-fill" style="width:${rate}%"></div></div>` : ''}</div>
+      <div class="nums"><div><b>${r.pl}</b>trận</div>${anyW ? `<div><b>${r.w}</b>thắng</div><div><b>${rate}%</b>tỉ lệ</div>` : ''}</div></div>`; }).join('')}</div>
+    ${pairsHtml(bestPairs(ag.pairs, 3), '🤝 Cặp đồng đội ăn ý nhất')}
+    <div class="tip">💡 <span>Tính cả buổi đang chơi. Cặp ăn ý: đánh cùng nhau từ 3 trận có kết quả trở lên.</span></div>`;
+}
 function viewStats() {
+  if (statsRange !== 'session') return viewStatsLong();
   const rounds = S.session.rounds, doneR = rounds.filter(r => r.done);
+  const R = autoLv() ? ratingsNow() : null;
   const st = computeStats(doneR);
   const list = S.players.filter(p => p.active || st.played[p.id] || st.sat[p.id])
     .sort((a, b) => (st.wins[b.id] - st.wins[a.id]) || (st.diff[b.id] - st.diff[a.id]) || (st.played[b.id] - st.played[a.id]) || a.name.localeCompare(b.name));
@@ -194,6 +227,7 @@ function viewStats() {
     const pl = st.played[p.id] || 0, w = st.wins[p.id] || 0, rate = pl ? Math.round(w / pl * 100) : 0;
     return `<div class="lb"><div class="rank ${anyWin && i < 3 && w ? 'top' : ''}">${anyWin && i < 3 && w ? medal[i] : i + 1}</div>${avatar(p, 'sm')}
       <div class="mid"><div class="nm">${esc(p.name)}${p.active ? '' : ' <span class="small muted">· đã về</span>'}</div>
+        ${R && R[p.id] != null ? `<div class="meta">⭐ ${fmtRating(R[p.id])} <span class="${R[p.id] >= r0Of(p) ? 'up' : 'down'}">${R[p.id] >= r0Of(p) ? '▲' : '▼'}${Math.abs(Math.round(R[p.id] - r0Of(p)))}</span></div>` : ''}
         ${anyWin ? `<div class="bar-track"><div class="bar-fill" style="width:${rate}%"></div></div>` : ''}</div>
       <div class="nums"><div><b>${pl}</b>trận</div>${anyWin ? `<div><b>${w}</b>thắng</div>` : ''}${anyScore ? `<div><b>${st.diff[p.id] > 0 ? '+' : ''}${st.diff[p.id]}</b>HS</div>` : ''}<div><b>${st.sat[p.id] || 0}</b>nghỉ</div></div></div>`;
   }).join('');
@@ -209,13 +243,14 @@ function viewStats() {
         <div class="side r ${c.winner === 'b' ? 'w' : ''}">${nm(c.b)}</div></button>`).join('')}
         ${r.resting.length ? `<div class="small muted" style="padding-top:6px">☕ Nghỉ: ${r.resting.map(id => esc(P(id).name)).join(', ')}</div>` : ''}</div></details>`;
   }).join('');
-  if (!rounds.length) return `<div class="card empty"><div class="big">📊</div><h3>Chưa có dữ liệu</h3><p>Thống kê sẽ hiện sau khi chơi xong vòng đầu tiên.</p>
+  if (!rounds.length) return `${statsSeg()}<div class="card empty"><div class="big">📊</div><h3>Chưa có dữ liệu</h3><p>Thống kê sẽ hiện sau khi chơi xong vòng đầu tiên.</p>
     ${canEdit() ? `<button class="btn primary" onclick="goTab('play')">Bắt đầu xếp sân</button>` : ''}</div>`;
-  return `
-    <div class="tiles"><div class="tile"><b>${doneR.length}</b><span>vòng xong</span></div>
+  return `${statsSeg()}
+    <div class="tiles"><div class="tile"><b>${doneR.length}</b><span>${isQueue() ? 'trận xong' : 'vòng xong'}</span></div>
       <div class="tile"><b>${matches}</b><span>trận đấu</span></div><div class="tile"><b>${list.length}</b><span>người chơi</span></div></div>
     <div class="sec-title"><h2>${anyWin ? 'Bảng xếp hạng' : 'Số trận mỗi người'}</h2></div>
     ${rows && doneR.length ? `<div class="plist">${rows}</div>` : `<div class="card small muted" style="text-align:center">Bấm "Xong" sau mỗi vòng để tính thống kê</div>`}
+    ${pairsHtml(bestPairs(sessionPairs(), 2), '🤝 Cặp ăn ý buổi này')}
     <div class="sec-title"><h2>Lịch sử</h2></div>
     <div class="tip" style="margin:0 4px 10px" ${canEdit() ? '' : 'hidden'}>✏️ <span>Chạm vào một trận để ghi hoặc sửa kết quả, kể cả các vòng đã xong.</span></div>${hist}
     ${canEdit() ? `<button class="btn danger block" style="margin-top:8px" onclick="newSession()">🧹 Bắt đầu buổi mới</button>` : ''}`;

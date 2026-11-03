@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const FILES = ['state.js', 'algo.js', 'actions.js', 'money.js', 'me.js'];
+const FILES = ['state.js', 'algo.js', 'rating.js', 'actions.js', 'money.js', 'me.js'];
 
 function loadApp() {
   const store = new Map();
@@ -12,7 +12,7 @@ function loadApp() {
     localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) },
     navigator: {}, window: {},
     // các hàm giao diện được thay bằng hàm rỗng
-    render() {}, toast() {}, closeSheet() {}, canEdit: () => true, openSheet() {}, confirmSheet(t, m, ok, fn) { fn(); }, schedulePush() {}, haptic() {},
+    render() {}, toast() {}, closeSheet() {}, canEdit: () => true, SP: () => ({ key: 'badminton', name: 'Cầu lông', emoji: '🏸', quick: [21, 15, 11] }), openSheet() {}, confirmSheet(t, m, ok, fn) { fn(); }, schedulePush() {}, haptic() {},
     esc: s => String(s), scrollTo() {},
   };
   ctx.window = ctx; ctx.globalThis = ctx;
@@ -24,7 +24,7 @@ function loadApp() {
   defaultState, buildRound, bestArrangement, computeStats, generateRound, finishRound, giveCredit, addPlayers,
   togglePlayer, addCourt, removeCourt, activePlayers, curRound, ensurePlan, pairKey, P, uid, sanitize: sanitizeState,
   parseMoney, moneyBill, saveCost, setMoneyMode, toggleExclude, togglePaid,
-  finishCourt, syncQueue,
+  finishCourt, syncQueue, ratingsNow, closeSession, aggregate, bestPairs, sessionPairs, lvOf, setLevel, newSession, setWinner,
 };`, ctx, { filename: 'app-bundle.js' });
   return ctx.app;
 }

@@ -435,3 +435,5 @@ nav button{font-size:10.5px}
 .qitem .qn{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--surface-2);color:var(--muted);flex:none}
 .qitem.next .qn{background:var(--accent);color:#3b2a00}
 .qitem.next .chip{background:var(--accent-soft)}
+
+.meta .up{color:var(--brand);font-weight:700} .meta .down{color:var(--danger);font-weight:700}

@@ -27,7 +27,7 @@ const normId = s => String(s || '').trim().toLowerCase().normalize('NFD').replac
   .replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
 const dbRef = path => FB.ref(fbDb, path);
 const canEdit = () => !room || !!room.admin;
-const syncPart = () => ({ players: S.players, settings: S.settings, session: S.session });
+const syncPart = () => ({ players: S.players, settings: S.settings, session: S.session, archive: S.archive || [] });
 
 async function loadFirebase() {
   if (window.__FB_LOADER) return window.__FB_LOADER();
@@ -99,7 +99,7 @@ const storeV = () => { try { localStorage.setItem(vKey(), String(remoteV)); } ca
 function applyRemoteStr(s) {
   let obj; try { obj = JSON.parse(s); } catch (e) { return false; }
   const clean = sanitizeState(obj);
-  S.players = clean.players; S.settings = clean.settings; S.session = clean.session;
+  S.players = clean.players; S.settings = clean.settings; S.session = clean.session; S.archive = clean.archive;
   try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {}
   applyCheckins();
   selSlot = null;

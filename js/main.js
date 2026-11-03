@@ -15,12 +15,15 @@
 });
 
 // Cho phép hoàn tác các thao tác khó quay lại (bọc sau lớp chặn quyền: người xem bị chặn thì không có gì để hoàn tác)
-[['finishRound', 'Xong vòng'], ['finishCourt', 'Xong sân'], ['generateRound', 'Xếp lại'], ['removeCourt', 'Bỏ sân'], ['addCourt', 'Mở thêm sân'],
- ['setFormat', 'Đổi hình thức'], ['startTour', 'Tạo giải']].forEach(([n, label]) => {
+[['finishRound', tx("Xong vòng")], ['finishCourt', tx("Xong sân")], ['generateRound', tx("Xếp lại")], ['removeCourt', tx("Bỏ sân")], ['addCourt', tx("Mở thêm sân")],
+ ['setFormat', tx("Đổi hình thức")], ['startTour', tx("Tạo giải")]].forEach(([n, label]) => {
   const f = window[n]; if (typeof f !== 'function') return;
   window[n] = function () { return undoable(label, f, [...arguments]); };
 });
 
+// chữ trong index.html theo ngôn ngữ đang chọn
+document.getElementById('nav').setAttribute('aria-label', tx('Chuyển màn hình'));
+document.title = tx('Xếp Sân · Cầu lông & Pickleball');
 render();
 bootCloud();
 

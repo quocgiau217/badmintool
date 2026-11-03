@@ -15,7 +15,7 @@
  * (trong phòng: results/<khoá>/<mã trận>, để nhiều trọng tài nhập cùng lúc không đụng nhau).
  * Kết quả chỉ có hiệu lực khi 2 đội lúc ghi trùng 2 đội hiện tại của trận. */
 const EV_MAX = 100;
-const EV_FMT = { rr: 'Vòng tròn', groups: 'Chia bảng vòng tròn', groups_ko: 'Chia bảng → loại trực tiếp', ko: 'Loại trực tiếp' };
+const EV_FMT = { rr: tx("Vòng tròn"), groups: tx("Chia bảng vòng tròn"), groups_ko: tx("Chia bảng → loại trực tiếp"), ko: tx("Loại trực tiếp") };
 const GROUP_NAMES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const gName = i => (i < 26 ? GROUP_NAMES[i] : 'B' + (i + 1));
 
@@ -102,11 +102,11 @@ function matchFromGames(games, rule, sport) {
   const need = Math.ceil(rule.games / 2), cap = evCap(rule.pts, sport);
   let a = 0, b = 0;
   for (const [x, y] of games) {
-    if (a === need || b === need) return { error: 'Thừa game sau khi đã có đội thắng' };
-    if (!gameValid(x, y, rule.pts, cap)) return { error: `Tỉ số ${x}–${y} chưa đúng luật (tới ${rule.pts}${cap ? `, trần ${cap}` : ''}, hơn 2 điểm)` };
+    if (a === need || b === need) return { error: tx("Thừa game sau khi đã có đội thắng") };
+    if (!gameValid(x, y, rule.pts, cap)) return { error: `${tx("Tỉ số {0}–{1} chưa đúng luật (tới {2}{3}, hơn 2 điểm)", [x, y, rule.pts, cap ? `${tx(", trần {0}", [cap])}` : ''])}` };
     x > y ? a++ : b++;
   }
-  if (a < need && b < need) return { error: `Cần đủ ${need} game thắng` };
+  if (a < need && b < need) return { error: `${tx("Cần đủ {0} game thắng", [need])}` };
   return { w: a > b ? 'a' : 'b', ga: a, gb: b };
 }
 
@@ -153,16 +153,16 @@ function evQualifiers(E, R, matches) {
   for (let place = 0; place < E.advance; place++)
     for (let gi = 0; gi < nG; gi++) {
       if (place >= E.groups[gi].length) continue;
-      out.push({ gi, place, label: `${['Nhất', 'Nhì', 'Ba', 'Tư'][place]} ${gName(gi)}`, id: st[gi].done ? st[gi].rows[place].id : null, row: st[gi].done ? st[gi].rows[place] : null });
+      out.push({ gi, place, label: `${[tx("Nhất"), tx("Nhì"), tx("Ba"), tx("Tư")][place]} ${gName(gi)}`, id: st[gi].done ? st[gi].rows[place].id : null, row: st[gi].done ? st[gi].rows[place] : null });
     }
   // thêm các đội hạng tiếp theo tốt nhất cho đủ nhánh 2^k
   if (E.bestThirds) {
     let size = 2; while (size < out.length) size *= 2;
     const need = size - out.length, cand = [];
-    E.groups.forEach((g, gi) => { if (g.length > E.advance) cand.push({ gi, place: E.advance, label: `${['Nhất', 'Nhì', 'Ba', 'Tư', 'Năm'][E.advance]} ${gName(gi)}`, id: st[gi].done ? st[gi].rows[E.advance].id : null, row: st[gi].done ? st[gi].rows[E.advance] : null }); });
+    E.groups.forEach((g, gi) => { if (g.length > E.advance) cand.push({ gi, place: E.advance, label: `${[tx("Nhất"), tx("Nhì"), tx("Ba"), tx("Tư"), tx("Năm")][E.advance]} ${gName(gi)}`, id: st[gi].done ? st[gi].rows[E.advance].id : null, row: st[gi].done ? st[gi].rows[E.advance] : null }); });
     const allDone = st.every(s => s.done);
     const score = q => (q.row ? q.row.w / Math.max(1, q.row.pl) * 1e6 + (q.row.gw - q.row.gl) / Math.max(1, q.row.pl) * 1e3 + (q.row.pw - q.row.pl2) / Math.max(1, q.row.pl) : 0);
-    const best = allDone ? cand.sort((a, b) => score(b) - score(a)).slice(0, need) : cand.slice(0, need).map((q, i) => Object.assign({}, q, { id: null, label: `Hạng ${E.advance + 1} tốt thứ ${i + 1}` }));
+    const best = allDone ? cand.sort((a, b) => score(b) - score(a)).slice(0, need) : cand.slice(0, need).map((q, i) => Object.assign({}, q, { id: null, label: `${tx("Hạng {0} tốt thứ {1}", [E.advance + 1, i + 1])}` }));
     out.push(...best);
   }
   return out;
@@ -185,7 +185,7 @@ function evBracketSlots(seeds) {
 }
 function evKoMatches(E, R, groupMatches) {
   let seeds;
-  if (E.fmt === 'ko') seeds = E.teams.slice().sort((a, b) => evTeamSkill(b) - evTeamSkill(a) || (a.id < b.id ? -1 : 1)).map((t, i) => ({ id: t.id, label: `Hạt giống ${i + 1}` }));
+  if (E.fmt === 'ko') seeds = E.teams.slice().sort((a, b) => evTeamSkill(b) - evTeamSkill(a) || (a.id < b.id ? -1 : 1)).map((t, i) => ({ id: t.id, label: `${tx("Hạt giống {0}", [i + 1])}` }));
   else if (E.fmt === 'groups_ko') seeds = evQualifiers(E, R, groupMatches);
   else return [];
   if (seeds.length < 2) return [];
@@ -202,14 +202,14 @@ function evKoMatches(E, R, groupMatches) {
     const cur = [];
     for (let k = 0; k < prev.length / 2; k++) {
       const x = prev[2 * k], y = prev[2 * k + 1];
-      cur.push({ id: `k${r}m${k}`, stage: 'k', r, k, a: winner(x), b: winner(y), la: x.bye ? x.la || x.lb : `Thắng ${x.id}`, lb: y.bye ? y.la || y.lb : `Thắng ${y.id}`, deps: [x, y].filter(m => !m.bye).map(m => m.id) });
+      cur.push({ id: `k${r}m${k}`, stage: 'k', r, k, a: winner(x), b: winner(y), la: x.bye ? x.la || x.lb : `${tx("Thắng {0}", [x.id])}`, lb: y.bye ? y.la || y.lb : `${tx("Thắng {0}", [y.id])}`, deps: [x, y].filter(m => !m.bye).map(m => m.id) });
     }
     rounds.push(cur); prev = cur;
   }
   const flat = rounds.flat().filter(m => !m.bye);
   if (E.third && rounds.length >= 2) {
     const semis = rounds[rounds.length - 2];
-    flat.splice(flat.length - 1, 0, { id: 'k3p', stage: 'k', r: rounds.length - 1, k: 1, third: true, a: loser(semis[0]), b: loser(semis[1]), la: 'Thua bán kết 1', lb: 'Thua bán kết 2', deps: semis.filter(m => !m.bye).map(m => m.id) });
+    flat.splice(flat.length - 1, 0, { id: 'k3p', stage: 'k', r: rounds.length - 1, k: 1, third: true, a: loser(semis[0]), b: loser(semis[1]), la: tx("Thua bán kết 1"), lb: tx("Thua bán kết 2"), deps: semis.filter(m => !m.bye).map(m => m.id) });
   }
   flat.koRounds = rounds.length;
   return flat;
@@ -223,8 +223,8 @@ function evAllMatches(E, R) {
   all.koRounds = k.koRounds || 0;
   return all;
 }
-const koName = (r, total) => ({ 1: 'Chung kết', 2: 'Bán kết', 3: 'Tứ kết', 4: 'Vòng 1/8' }[total - r] || `Vòng ${r + 1}`);
-const evMatchTitle = (E, m, total) => (m.stage === 'g' ? (E.fmt === 'rr' ? `Lượt ${m.r + 1}` : `Bảng ${gName(m.gi)} · lượt ${m.r + 1}`) : m.third ? 'Tranh hạng 3' : koName(m.r, total));
+const koName = (r, total) => ({ 1: tx("Chung kết"), 2: tx("Bán kết"), 3: tx("Tứ kết"), 4: tx("Vòng 1/8") }[total - r] || `${tx("Vòng {0}", [r + 1])}`);
+const evMatchTitle = (E, m, total) => (m.stage === 'g' ? (E.fmt === 'rr' ? `${tx("Lượt {0}", [m.r + 1])}` : `${tx("Bảng {0} · lượt {1}", [gName(m.gi), m.r + 1])}`) : m.third ? tx("Tranh hạng 3") : koName(m.r, total));
 
 /* ---------- lịch & gọi trận ---------- */
 const evDur = (E, m) => (m.rule.games > 1 ? E.dur3 : E.dur1) * 60000;

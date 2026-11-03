@@ -8,7 +8,7 @@ function addPlayers(text) {
     S.players.push(p); giveCredit(p.id); added++;
   });
   save(); render();
-  toast(added ? `Đã thêm ${added} người` : 'Tên đã có trong danh sách');
+  toast(added ? `${tx("Đã thêm {0} người", [added])}` : tx("Tên đã có trong danh sách"));
 }
 // người đến muộn: coi như đã chơi bằng người ít trận nhất để không bị dồn trận liên tục
 function giveCredit(id) {
@@ -37,9 +37,9 @@ function setLevel(id, lv) {
 }
 function removePlayer(id) {
   const used = S.session.rounds.some(r => r.courts.some(c => [...c.a, ...c.b].includes(id)));
-  if (used) { closeSheet(); toast('Người này đã chơi trong buổi. Hãy chuyển sang "vắng" thay vì xoá'); return; }
-  confirmSheet(`Xoá ${esc(P(id).name)}?`, 'Người chơi sẽ bị xoá khỏi danh sách.', 'Xoá', () => {
-    S.players = S.players.filter(p => p.id !== id); save(); render(); toast('Đã xoá');
+  if (used) { closeSheet(); toast(tx("Người này đã chơi trong buổi. Hãy chuyển sang \"vắng\" thay vì xoá")); return; }
+  confirmSheet(`${tx("Xoá {0}?", [esc(P(id).name)])}`, tx("Người chơi sẽ bị xoá khỏi danh sách."), tx("Xoá"), () => {
+    S.players = S.players.filter(p => p.id !== id); save(); render(); toast(tx("Đã xoá"));
   });
 }
 function finishRound() {
@@ -56,11 +56,11 @@ function finishRound() {
     selSlot = null; animNext = true; save(); render();
   } else generateRound();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  toast(`Bắt đầu vòng ${S.session.rounds.length}`);
+  toast(`${tx("Bắt đầu vòng {0}", [S.session.rounds.length])}`);
 }
 function newSession() {
-  confirmSheet('Bắt đầu buổi mới?', 'Tổng kết buổi này được lưu vào thống kê "Tất cả". Lịch đấu, kết quả chi tiết và khoản chi của buổi sẽ được xoá. Danh sách người chơi vẫn giữ.', 'Bắt đầu buổi mới', () => {
-    undoable('Bắt đầu buổi mới', () => {
+  confirmSheet(tx("Bắt đầu buổi mới?"), tx("Tổng kết buổi này được lưu vào thống kê \"Tất cả\". Lịch đấu, kết quả chi tiết và khoản chi của buổi sẽ được xoá. Danh sách người chơi vẫn giữ."), tx("Bắt đầu buổi mới"), () => {
+    undoable(tx("Bắt đầu buổi mới"), () => {
       closeSession();
       S.session = { rounds: [], credit: {}, started: Date.now() }; selSlot = null; save(); render();
     });
@@ -79,8 +79,8 @@ const nmJoin = ids => ids.map(id => esc(P(id).name)).join(' & ');
 function editMatch(ri, ci) {
   const r = S.session.rounds[ri], c = r && r.courts[ci]; if (!c) return;
   openResult({
-    title: `Kết quả · ${r.q ? 'Trận ' + r.no : 'Vòng ' + r.no} · ${esc(cName(c, ci))}`, a: c.a, b: c.b, winner: c.winner, score: c.score,
-    note: r.done ? ' Thống kê sẽ được tính lại.' : '',
+    title: `${tx("Kết quả · {0} · {1}", [r.q ? tx("Trận ") + r.no : tx("Vòng ") + r.no, esc(cName(c, ci))])}`, a: c.a, b: c.b, winner: c.winner, score: c.score,
+    note: r.done ? tx(" Thống kê sẽ được tính lại.") : '',
     save(w, sc) { c.winner = w; if (sc) c.score = sc; else delete c.score; },
   });
 }
@@ -90,18 +90,18 @@ function openResult(o) {
   ED = Object.assign({}, o, { w: o.winner || null });
   const team = t => `<div class="res-col">
       <button class="res-team ${t}" id="rt_${t}" onclick="edPick('${t}')">
-        <span class="res-tag">${o.labels ? esc(o.labels[t]) : 'Đội ' + t.toUpperCase()}</span>
+        <span class="res-tag">${o.labels ? esc(o.labels[t]) : tx("Đội ") + t.toUpperCase()}</span>
         ${o[t].map(id => `<span class="res-p">${avatar(P(id), 'xs')}<span>${esc(P(id).name)}</span></span>`).join('')}
-        <span class="res-win"><i class="i i-trophy"></i> Thắng</span></button>
+        <span class="res-win"><i class="i i-trophy"></i> ${tx("Thắng")}</span></button>
       <input class="score" id="sc_${t}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="–"
-        value="${o.score ? o.score[t === 'a' ? 0 : 1] : ''}" oninput="edScore()" aria-label="Điểm đội ${t.toUpperCase()}">
+        value="${o.score ? o.score[t === 'a' ? 0 : 1] : ''}" oninput="edScore()" aria-label="${tx("Điểm đội {0}", [t.toUpperCase()])}">
     </div>`;
   openSheet(`<h3>${o.title}</h3>
-    <p>Chạm đội thắng, hoặc nhập tỉ số (không bắt buộc).${o.note || ''}</p>
+    <p>${tx("Chạm đội thắng, hoặc nhập tỉ số (không bắt buộc).{0}", [o.note || ''])}</p>
     <div class="res">${team('a')}<div class="res-vs">VS</div>${team('b')}</div>
-    <div class="quick">${SP().quick.map(n => `<button class="btn sm" onclick="edQuick(${n})">Tới ${n}</button>`).join('')}</div>
-    <div class="row2"><button class="btn" onclick="edClear()">Xoá kết quả</button>
-      <button class="btn primary" onclick="edSave()">Lưu</button></div>`);
+    <div class="quick">${SP().quick.map(n => `<button class="btn sm" onclick="edQuick(${n})">${tx("Tới {0}", [n])}</button>`).join('')}</div>
+    <div class="row2"><button class="btn" onclick="edClear()">${tx("Xoá kết quả")}</button>
+      <button class="btn primary" onclick="edSave()">${tx("Lưu")}</button></div>`);
   edPaint();
 }
 const edVal = t => { const v = document.getElementById('sc_' + t).value.replace(/\D/g, ''); return v === '' ? null : +v; };
@@ -124,19 +124,19 @@ function edScore() {
 }
 // điền nhanh điểm cho đội thắng (cần chọn đội thắng trước)
 function edQuick(n) {
-  if (!ED.w) { toast('Chọn đội thắng trước'); return; }
+  if (!ED.w) { toast(tx("Chọn đội thắng trước")); return; }
   const win = document.getElementById('sc_' + ED.w), lose = document.getElementById('sc_' + (ED.w === 'a' ? 'b' : 'a'));
   win.value = n; if (lose.value === '' || +lose.value >= n) lose.value = ''; (lose.value === '' ? lose : win).focus();
 }
 function edClear() {
-  ED.save(null, null); save(); closeSheet(); render(); toast('Đã xoá kết quả');
+  ED.save(null, null); save(); closeSheet(); render(); toast(tx("Đã xoá kết quả"));
 }
 function edSave() {
   const a = edVal('a'), b = edVal('b');
-  if ((a == null) !== (b == null)) { toast('Nhập đủ điểm cả 2 đội, hoặc để trống cả 2'); return; }
-  if (a != null && a === b) { toast('Tỉ số không thể hoà'); return; }
+  if ((a == null) !== (b == null)) { toast(tx("Nhập đủ điểm cả 2 đội, hoặc để trống cả 2")); return; }
+  if (a != null && a === b) { toast(tx("Tỉ số không thể hoà")); return; }
   if (a != null) ED.save(a > b ? 'a' : 'b', [a, b]); else ED.save(ED.w, null);
-  haptic(); save(); closeSheet(); render(); toast('Đã lưu kết quả');
+  haptic(); save(); closeSheet(); render(); toast(tx("Đã lưu kết quả"));
 }
 // chạm 2 ô để đổi chỗ (kể cả với người đang nghỉ)
 function tapSlot(ref) {
@@ -150,39 +150,39 @@ function tapSlot(ref) {
   selSlot = null; save(); render();
 }
 function roundText(r) {
-  const lines = [`${SP().emoji} Vòng ${r.no}`];
+  const lines = [`${tx("{0} Vòng {1}", [SP().emoji, r.no])}`];
   r.courts.forEach((c, i) => lines.push(`${cName(c, i)}: ${c.a.map(id => P(id).name).join(' & ')}  ${c.score ? c.score.join('–') : '⚔️'}  ${c.b.map(id => P(id).name).join(' & ')}`)); // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
-  if (r.resting.length) lines.push(`Nghỉ: ${r.resting.map(id => P(id).name).join(', ')}`);
+  if (r.resting.length) lines.push(`${tx("Nghỉ: {0}", [r.resting.map(id => P(id).name).join(', ')])}`);
   return lines.join('\n');
 }
 async function shareText(text) {
   closeSheet();
   try {
     if (navigator.share) { await navigator.share({ text }); return; }
-    await navigator.clipboard.writeText(text); toast('Đã copy. Dán vào Zalo/Messenger');
+    await navigator.clipboard.writeText(text); toast(tx("Đã copy. Dán vào Zalo/Messenger"));
   } catch (e) {
     if (e && e.name === 'AbortError') return;
-    try { await navigator.clipboard.writeText(text); toast('Đã copy. Dán vào Zalo/Messenger'); } catch (e2) { prompt('Copy nội dung:', text); }
+    try { await navigator.clipboard.writeText(text); toast(tx("Đã copy. Dán vào Zalo/Messenger")); } catch (e2) { prompt(tx("Copy nội dung:"), text); }
   }
 }
 function shareRound(all) {
   const r = curRound(); if (!r) return;
   const rounds = all ? [r, ...(S.session.plan || [])] : [r];
   let text = rounds.map(roundText).join('\n\n');
-  if (all && rounds.length > 1) text += '\n\n(Các vòng sau là dự kiến, có thể thay đổi nếu có người đến/về)';
+  if (all && rounds.length > 1) text += tx("\n\n(Các vòng sau là dự kiến, có thể thay đổi nếu có người đến/về)");
   shareText(text);
 }
 function openShare() {
   const r = curRound(); if (!r) return;
   const plan = isQueue() ? [] : S.session.plan || [], last = plan.length ? plan[plan.length - 1].no : null;
-  openSheet(`<h3>Gửi vào nhóm</h3><p>Gửi qua Zalo, Messenger… dạng ảnh hoặc chữ.</p>
-    <div class="field"><label>Dạng ảnh</label><div style="display:grid;gap:10px">
-      <button class="btn primary block" onclick="shareImage(${!!last})"><i class="i i-share"></i> ${isQueue() ? 'Ảnh sân & hàng chờ' : last ? `Ảnh lịch: vòng ${r.no} → ${Math.min(last, r.no + 3)}` : `Ảnh vòng ${r.no}`}</button>
-      ${last ? `<button class="btn block" onclick="shareImage(false)"><i class="i i-share"></i> Ảnh chỉ vòng ${r.no}</button>` : ''}</div></div>
-    <div class="field"><label>Dạng chữ</label><div class="grid2">
-      <button class="btn" onclick="shareRound(false)"><i class="i i-clipboard"></i> ${isQueue() ? 'Sân đang đánh' : 'Vòng ' + r.no}</button>
-      ${last ? `<button class="btn" onclick="shareRound(true)"><i class="i i-calendar"></i> Cả lịch</button>` : ''}</div></div>`);
+  openSheet(`<h3>${tx("Gửi vào nhóm")}</h3><p>${tx("Gửi qua Zalo, Messenger… dạng ảnh hoặc chữ.")}</p>
+    <div class="field"><label>${tx("Dạng ảnh")}</label><div style="display:grid;gap:10px">
+      <button class="btn primary block" onclick="shareImage(${!!last})"><i class="i i-share"></i> ${isQueue() ? tx("Ảnh sân & hàng chờ") : last ? `${tx("Ảnh lịch: vòng {0} → {1}", [r.no, Math.min(last, r.no + 3)])}` : `${tx("Ảnh vòng {0}", [r.no])}`}</button>
+      ${last ? `<button class="btn block" onclick="shareImage(false)"><i class="i i-share"></i> ${tx("Ảnh chỉ vòng {0}", [r.no])}</button>` : ''}</div></div>
+    <div class="field"><label>${tx("Dạng chữ")}</label><div class="grid2">
+      <button class="btn" onclick="shareRound(false)"><i class="i i-clipboard"></i> ${isQueue() ? tx("Sân đang đánh") : tx("Vòng ") + r.no}</button>
+      ${last ? `<button class="btn" onclick="shareRound(true)"><i class="i i-calendar"></i> ${tx("Cả lịch")}</button>` : ''}</div></div>`);
 }
 function focusP(id) { haptic(); focusId = focusId === id ? null : id; render(); }
-function replan() { haptic(); ensurePlan(true); render(); toast('Đã xếp lại lịch dự kiến'); }
+function replan() { haptic(); ensurePlan(true); render(); toast(tx("Đã xếp lại lịch dự kiến")); }
 function setPreview(n) { S.settings.preview = n; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }

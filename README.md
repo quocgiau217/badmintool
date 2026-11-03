@@ -13,6 +13,7 @@ Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lôn
 - **Đổi chỗ thủ công**, **ghi tỉ số**, sửa kết quả cả các vòng đã xong.
 - **Giải đấu nhỏ**: vòng tròn (bảng xếp hạng) hoặc loại trực tiếp (nhánh đấu, hạt giống, miễn đấu, **tranh hạng 3**, bục trao giải); tự chia đội cân trình; **lịch theo giờ và sân** (giờ bắt đầu, phút/trận, số sân — không đội nào đánh 2 trận cùng lúc).
 - **Hoàn tác**: bấm nhầm *Xong vòng*, *Xong sân*, *Xếp lại*, *Bắt đầu buổi mới*… có 10 giây để bấm **Hoàn tác**.
+- **Tiếng Việt / English** và **giao diện Sáng / Tối / Tự động** (theo máy): nút quả địa cầu trên thanh đầu trang; lựa chọn lưu trên từng máy.
 - **Gửi nhóm**: dạng **ảnh** (vòng hiện tại + lịch dự kiến, hoặc sân & hàng chờ) hoặc dạng chữ cho Zalo, Messenger.
 
 **Người chơi & thống kê**
@@ -75,6 +76,7 @@ Web tĩnh, không cần build: `index.html` nạp `css/app.css`, `css/icons.css`
 
 | File | Nội dung |
 |---|---|
+| `js/i18n.js` | Ngôn ngữ (`tx("câu tiếng Việt")` → bảng tiếng Anh `EN`), giao diện sáng/tối (nạp đầu tiên) |
 | `js/state.js` | Dữ liệu, lưu trên máy, kiểm tra & chuẩn hoá dữ liệu, thống kê |
 | `js/algo.js` | Thuật toán xếp sân (đôi/đơn), lịch dự kiến, xếp hàng, thêm/bỏ sân |
 | `js/rating.js` | Trình độ tự động (Elo), lưu tổng kết buổi, thống kê nhiều buổi |
@@ -83,6 +85,7 @@ Web tĩnh, không cần build: `index.html` nạp `css/app.css`, `css/icons.css`
 | `js/money.js` | Chia tiền, mã QR VietQR |
 | `js/me.js` | "Tôi là ai", tự điểm danh, báo tới lượt |
 | `js/tour.js` | Giải đấu vòng tròn / loại trực tiếp |
+| `js/event.js` | Thuật toán chế độ Giải đấu lớn: ghép cặp, chia bảng, xếp hạng, nhánh, lịch sân |
 | `js/shareimg.js` | Vẽ lịch thành ảnh để gửi nhóm |
 | `js/undo.js` | Hoàn tác |
 | `js/merge.js` | Gộp 3 chiều (gốc / trên máy / máy chủ) |
@@ -90,6 +93,8 @@ Web tĩnh, không cần build: `index.html` nạp `css/app.css`, `css/icons.css`
 | `js/roomadmin.js` | Đổi tên / mật khẩu / mã quản lý, mã quản lý phụ |
 | `js/views.js` | Vẽ các màn hình |
 | `js/main.js` | Khởi động (nạp cuối) |
+
+Thêm chữ mới trên giao diện: viết tiếng Việt trong `tx("...")` (giá trị thay đổi dùng `{0}`, `{1}`: `tx("Còn {0} sân", [n])`) rồi thêm bản tiếng Anh vào `EN` trong `js/i18n.js`; `npm test` báo chuỗi nào còn thiếu bản dịch.
 
 Chạy test thuật toán (cần Node 18+, không cần cài gì thêm):
 ```bash

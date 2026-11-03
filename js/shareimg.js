@@ -12,9 +12,9 @@ function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.ro
 function imageBlocks(all) {
   const r = curRound(); if (!r) return [];
   const q = isQueue(), blk = rd => ({
-    title: q ? 'Đang đánh' : `Vòng ${rd.no}${rd === r ? '' : ' · dự kiến'}`,
+    title: q ? tx("Đang đánh") : `${tx("Vòng {0}{1}", [rd.no, rd === r ? '' : tx(" · dự kiến")])}`,
     courts: rd.courts.map((c, i) => ({ name: cName(c, i), a: c.a, b: c.b, score: c.score, winner: c.winner })),
-    rest: rd.resting, restLabel: q ? 'Hàng chờ' : 'Nghỉ',
+    rest: rd.resting, restLabel: q ? tx("Hàng chờ") : tx("Nghỉ"),
   });
   return all && !q ? [r, ...(S.session.plan || [])].slice(0, 4).map(blk) : [blk(r)];
 }
@@ -31,10 +31,10 @@ async function roundImage(all) {
   // đầu ảnh
   ctx.fillStyle = pb ? '#1d4fa3' : '#0e7a57'; ctx.fillRect(0, 0, IMG_W, HEAD - 30);
   ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
-  ctx.font = imgFont(700, 52); ctx.fillText(fitText(ctx, room ? room.name : 'Xếp Sân', IMG_W - 2 * IMG_PAD), IMG_PAD, 86);
+  ctx.font = imgFont(700, 52); ctx.fillText(fitText(ctx, room ? room.name : tx("Xếp Sân"), IMG_W - 2 * IMG_PAD), IMG_PAD, 86);
   const d = new Date();
   ctx.font = imgFont(500, 28); ctx.fillStyle = 'rgba(255,255,255,.88)';
-  ctx.fillText(`${sp.name} · ${S.settings.format === 'singles' ? 'đánh đơn' : 'đánh đôi'} · ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`, IMG_PAD, 130);
+  ctx.fillText(`${sp.name} · ${S.settings.format === 'singles' ? tx("đánh đơn") : tx("đánh đôi")} · ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`, IMG_PAD, 130);
   let y = HEAD;
   const name = id => P(id).name;
   for (const b of blocks) {
@@ -71,25 +71,25 @@ async function roundImage(all) {
       ctx.fillStyle = '#56655d'; ctx.font = imgFont(600, 26); ctx.fillText(b.restLabel + ':', IMG_PAD, y + 30);
       ctx.fillStyle = '#0f1b15'; ctx.font = imgFont(500, 28);
       for (let i = 0; i < b.rest.length; i += 4) {
-        const line = b.rest.slice(i, i + 4).map((id, j) => (b.restLabel === 'Hàng chờ' ? `${i + j + 1}. ` : '') + name(id)).join('   ');
+        const line = b.rest.slice(i, i + 4).map((id, j) => (b.restLabel === tx("Hàng chờ") ? `${i + j + 1}. ` : '') + name(id)).join('   ');
         ctx.fillText(fitText(ctx, line, IMG_W - 2 * IMG_PAD - 150), IMG_PAD + 150, y + 30 + (i / 4) * 44);
       }
       y += 40 + restLines(b) * 44;
     }
     y += 24;
   }
-  ctx.fillStyle = '#56655d'; ctx.font = imgFont(500, 24); ctx.fillText('Xếp Sân · ' + location.host + location.pathname.replace(/index\.html$/, ''), IMG_PAD, H - 32);
+  ctx.fillStyle = '#56655d'; ctx.font = imgFont(500, 24); ctx.fillText(tx("Xếp Sân · ") + location.host + location.pathname.replace(/index\.html$/, ''), IMG_PAD, H - 32);
   return new Promise(res => cv.toBlob(res, 'image/png'));
 }
 async function shareImage(all) {
   const r = curRound(); if (!r) return;
-  closeSheet(); toast('Đang tạo ảnh…');
+  closeSheet(); toast(tx("Đang tạo ảnh…"));
   const blob = await roundImage(all);
   const file = new File([blob], `xep-san-${isQueue() ? 'hang-cho' : 'vong-' + r.no}.png`, { type: 'image/png' });
   try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Lịch xếp sân' }); return; }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: tx("Lịch xếp sân") }); return; }
   } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  toast('Đã lưu ảnh. Gửi vào nhóm từ thư viện ảnh');
+  toast(tx("Đã lưu ảnh. Gửi vào nhóm từ thư viện ảnh"));
 }

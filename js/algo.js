@@ -101,7 +101,7 @@ function finishCourt(ci) {
   if (pick.length < need) { // không đủ người cho sân này nữa
     r.courts.splice(ci, 1); r.resting = [...queue, ...out];
     if (!r.courts.length) r.done = true;
-    toast(`Không đủ người. Đã đóng ${cName(c, ci)}`);
+    toast(`${tx("Không đủ người. Đã đóng {0}", [cName(c, ci)])}`);
   } else {
     const [nc] = bestArrangement(pick, st, S.settings.mode === 'balanced');
     nc.name = c.name; nc.start = nowSrv();
@@ -123,8 +123,8 @@ function syncQueue() {
 }
 /* ---------- sân: tên, thêm / bỏ sân giữa vòng ---------- */
 const MAX_COURTS = 10;
-const courtLabel = i => ((S.settings.courtNames || [])[i] || '').trim() || `Sân ${i + 1}`;
-const cName = (c, i) => (c && c.name) || `Sân ${i + 1}`;
+const courtLabel = i => ((S.settings.courtNames || [])[i] || '').trim() || `${tx("Sân {0}", [i + 1])}`;
+const cName = (c, i) => { const n = c && c.name, m = /^(?:Sân|Court) (\d+)$/.exec(n || ''); return m ? tx("Sân {0}", [m[1]]) : n || tx("Sân {0}", [i + 1]); }; // tên mặc định đã lưu -> hiện theo ngôn ngữ người xem
 const cShort = (c, i) => { const n = cName(c, i), d = n.match(/\d+/); return d ? 'S' + d[0] : n.slice(0, 3); };
 // cập nhật tên sân ở vòng đang chơi và các vòng dự kiến
 function syncCourtNames() {
@@ -140,13 +140,13 @@ function setCourtName(i, name) {
 function openCourt(ci) {
   const r = curRound(), c = r && r.courts[ci]; if (!c) return;
   haptic();
-  openSheet(`<h3>${esc(cName(c, ci))}</h3><p>Đổi tên cho đúng số sân ở nhà thi đấu, hoặc bỏ sân nếu bị lấy mất.</p>
-    <div class="field"><label>Tên sân</label><input type="text" id="cName" maxlength="20" value="${esc(((S.settings.courtNames || [])[ci] || '').trim())}" placeholder="Sân ${ci + 1}"
+  openSheet(`<h3>${esc(cName(c, ci))}</h3><p>${tx("Đổi tên cho đúng số sân ở nhà thi đấu, hoặc bỏ sân nếu bị lấy mất.")}</p>
+    <div class="field"><label>${tx("Tên sân")}</label><input type="text" id="cName" maxlength="20" value="${esc(((S.settings.courtNames || [])[ci] || '').trim())}" placeholder="${tx("Sân {0}", [ci + 1])}"
       onkeydown="if(event.key==='Enter'){event.preventDefault();setCourtName(${ci},this.value);closeSheet()}"></div>
-    ${r.courts.length > 1 ? `<button class="btn danger block" onclick="removeCourt(${ci})"><i class="i i-minus"></i> Bỏ sân này khỏi vòng ${r.no}</button>
-      <p class="small" style="margin:8px 2px 0">${perCourt()} người trên sân sẽ chuyển sang nghỉ, các vòng sau xếp với ${r.courts.length - 1} sân.</p>` : ''}
-    <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
-      <button class="btn primary" onclick="setCourtName(${ci},v('cName'));closeSheet();toast('Đã đổi tên sân')">Lưu</button></div>`);
+    ${r.courts.length > 1 ? `<button class="btn danger block" onclick="removeCourt(${ci})"><i class="i i-minus"></i> ${tx("Bỏ sân này khỏi vòng {0}", [r.no])}</button>
+      <p class="small" style="margin:8px 2px 0">${tx("{0} người trên sân sẽ chuyển sang nghỉ, các vòng sau xếp với {1} sân.", [perCourt(), r.courts.length - 1])}</p>` : ''}
+    <div class="row2"><button class="btn" onclick="closeSheet()">${tx("Huỷ")}</button>
+      <button class="btn primary" onclick="setCourtName(${ci},v('cName'));closeSheet();toast(tx('Đã đổi tên sân'))">${tx("Lưu")}</button></div>`);
 }
 function removeCourt(ci) {
   const r = curRound(); if (!r || r.courts.length < 2) return;
@@ -155,13 +155,13 @@ function removeCourt(ci) {
   const names = (S.settings.courtNames || []).slice(); names.splice(ci, 1); S.settings.courtNames = names;
   S.settings.courts = r.courts.length;
   syncCourtNames(); selSlot = null; closeSheet(); save(); render();
-  toast(`Đã bỏ ${cName(c, ci)}. Còn ${r.courts.length} sân`);
+  toast(`${tx("Đã bỏ {0}. Còn {1} sân", [cName(c, ci), r.courts.length])}`);
 }
 // mở thêm 1 sân ngay trong vòng: lấy người nghỉ ưu tiên (ít trận nhất)
 function addCourt() {
   const r = curRound(); if (!r) return;
-  if (r.courts.length >= MAX_COURTS) { toast(`Tối đa ${MAX_COURTS} sân`); return; }
-  if (r.resting.length < perCourt()) { toast(`Cần ít nhất ${perCourt()} người đang nghỉ để mở thêm sân`); return; }
+  if (r.courts.length >= MAX_COURTS) { toast(`${tx("Tối đa {0} sân", [MAX_COURTS])}`); return; }
+  if (r.resting.length < perCourt()) { toast(`${tx("Cần ít nhất {0} người đang nghỉ để mở thêm sân", [perCourt()])}`); return; }
   haptic();
   const st = computeStats(S.session.rounds.slice(0, -1)), credit = S.session.credit || {};
   const score = id => (st.played[id] || 0) + (credit[id] || 0);
@@ -172,11 +172,11 @@ function addCourt() {
   r.resting = r.resting.filter(id => !pick.includes(id));
   S.settings.courts = Math.max(S.settings.courts, r.courts.length);
   selSlot = null; save(); render();
-  toast(`Đã mở thêm ${c.name}`);
+  toast(`${tx("Đã mở thêm {0}", [c.name])}`);
 }
 
 function generateRound() {
-  if (activePlayers().length < perCourt()) { toast(`Cần ít nhất ${perCourt()} người đang có mặt`); return; }
+  if (activePlayers().length < perCourt()) { toast(`${tx("Cần ít nhất {0} người đang có mặt", [perCourt()])}`); return; }
   if (curRound()) S.session.rounds.pop(); // xếp lại vòng hiện tại
   S.session.rounds.push(startCourts(buildRound(S.session.rounds)));
   S.session.plan = []; // lịch dự kiến sẽ tính lại

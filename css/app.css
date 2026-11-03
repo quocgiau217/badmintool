@@ -512,3 +512,6 @@ body:not(.has-bar) .undo{bottom:calc(90px + env(safe-area-inset-bottom))}
 .podium{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:13px;font-weight:600}
 .podium span{display:inline-flex;align-items:center;gap:6px}
 .podium .medal{width:20px;height:20px;font-size:11px}
+/* nút ngôn ngữ & giao diện trên thanh đầu */
+.prefs-btn{width:auto;height:44px;padding:0 10px;display:inline-flex;gap:5px;align-items:center;color:#fff;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.22);font-weight:700;font-size:12px;letter-spacing:.02em}
+.prefs-btn.sq{width:44px;padding:0;justify-content:center}

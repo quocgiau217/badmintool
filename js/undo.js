@@ -21,13 +21,13 @@ function undoLast() {
   const label = undoSnap.label;
   undoSnap = null; selSlot = null; hideUndo();
   save(); render();
-  toast('Đã hoàn tác: ' + label);
+  toast(tx("Đã hoàn tác: ") + label);
   return true;
 }
 function showUndo(label) {
   if (typeof document === 'undefined') return;
   const el = document.getElementById('undo'); if (!el) return;
-  el.innerHTML = `<span>${esc(label)}</span><button class="undo-btn" onclick="undoLast()"><i class="i i-refresh"></i> Hoàn tác</button><i class="undo-time" aria-hidden="true"></i>`;
+  el.innerHTML = `<span>${esc(label)}</span><button class="undo-btn" onclick="undoLast()"><i class="i i-refresh"></i> ${tx("Hoàn tác")}</button><i class="undo-time" aria-hidden="true"></i>`;
   el.hidden = false;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(undoT); undoT = setTimeout(() => { undoSnap = null; hideUndo(); }, UNDO_MS);

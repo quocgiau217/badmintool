@@ -1,6 +1,6 @@
 /* ================== UI HELPERS ================== */
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const LV = ['', 'Mới chơi', 'Yếu', 'Trung bình', 'Khá', 'Giỏi'];
+const LV = ['', tx("Mới chơi"), tx("Yếu"), tx("Trung bình"), tx("Khá"), tx("Giỏi")];
 function hue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 360; return h; }
 function initials(name) { const w = name.trim().split(/\s+/); return (w[w.length - 1] || '?').charAt(0); }
 function avatar(p, cls = '') { return `<div class="av ${cls}" style="background:hsl(${hue(p.name)} 50% 36%)" aria-hidden="true">${esc(initials(p.name))}</div>`; }
@@ -23,9 +23,9 @@ const ICON = {
 
 /* ================== MÔN CHƠI ================== */
 const SPORTS = {
-  badminton: { key: 'badminton', name: 'Cầu lông', emoji: '🏸', quick: [21, 15, 11], desc: 'Đánh tới 21', // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
+  badminton: { key: 'badminton', name: tx("Cầu lông"), emoji: '🏸', quick: [21, 15, 11], desc: tx("Đánh tới 21"), // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(38 12 12)"><path d="M7.2 2.6 L16.8 2.6 L14.2 14 L9.8 14 Z" fill="currentColor" fill-opacity=".18"/><path d="M12 2.6 V14 M9.4 7.6 H14.6"/><path d="M9.8 14 H14.2 V15.6 A2.2 2.2 0 0 1 9.8 15.6 Z" fill="currentColor"/></g></svg>' },
-  pickleball: { key: 'pickleball', name: 'Pickleball', emoji: '🏓', quick: [11, 15, 21], desc: 'Đánh tới 11', // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
+  pickleball: { key: 'pickleball', name: 'Pickleball', emoji: '🏓', quick: [11, 15, 21], desc: tx("Đánh tới 11"), // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-32 9.5 11)"><rect x="3.8" y="1.6" width="11.4" height="12.6" rx="3.6" fill="currentColor" fill-opacity=".18"/><rect x="7.9" y="14.2" width="3.2" height="6.6" rx="1.2" fill="currentColor"/></g><circle cx="18.6" cy="18.2" r="3.3" fill="currentColor" fill-opacity=".18"/><circle cx="17.6" cy="17.3" r=".5" fill="currentColor" stroke="none"/><circle cx="19.7" cy="17.6" r=".5" fill="currentColor" stroke="none"/><circle cx="18.5" cy="19.4" r=".5" fill="currentColor" stroke="none"/></svg>' }
 };
 const sportOf = k => SPORTS[k] || SPORTS.badminton;
@@ -41,7 +41,7 @@ function setSport(k) {
   S.settings.sport = k; save(); render();
   if (room && room.admin && FB) FB.update(dbRef('rooms/' + room.id), { sport: k }).catch(() => {}); // để danh sách phòng hiện đúng môn
   if (document.getElementById('sheet').classList.contains('show')) openSettings();
-  toast(`Đã chuyển sang ${sportOf(k).name}`);
+  toast(`${tx("Đã chuyển sang {0}", [sportOf(k).name])}`);
 }
 
 let toastT;
@@ -101,38 +101,38 @@ let pendingConfirm = null;
 function confirmSheet(title, msg, okLabel, fn) {
   pendingConfirm = fn;
   openSheet(`<h3>${title}</h3><p>${msg}</p>
-    <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
+    <div class="row2"><button class="btn" onclick="closeSheet()">${tx("Huỷ")}</button>
     <button class="btn danger" onclick="closeSheet();pendingConfirm&&pendingConfirm()">${okLabel}</button></div>`);
 }
 function editPlayer(id) {
   const p = P(id); haptic();
   openSheet(`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">${avatar(p)}<div><h3 style="margin:0">${esc(p.name)}</h3>
-      <div class="small muted">${p.active ? 'Đang có mặt' : 'Vắng'}</div></div></div>
-    <div class="field"><label>Tên</label><input type="text" id="editName" value="${esc(p.name)}" maxlength="30"></div>
-    <div class="field"><label>Trình độ</label><div class="lvpick">${[1, 2, 3, 4, 5].map(l =>
+      <div class="small muted">${p.active ? tx("Đang có mặt") : tx("Vắng")}</div></div></div>
+    <div class="field"><label>${tx("Tên")}</label><input type="text" id="editName" value="${esc(p.name)}" maxlength="30"></div>
+    <div class="field"><label>${tx("Trình độ")}</label><div class="lvpick">${[1, 2, 3, 4, 5].map(l =>
       `<button class="${p.level === l ? 'on' : ''}" onclick="setLevel('${id}',${l});editPlayer('${id}')"><b>${l}</b><span>${LV[l]}</span></button>`).join('')}</div></div>
-    <div class="row2"><button class="btn danger" onclick="removePlayer('${id}')">Xoá</button>
+    <div class="row2"><button class="btn danger" onclick="removePlayer('${id}')">${tx("Xoá")}</button>
       <button class="btn primary" onclick="renamePlayer('${id}')">Xong</button></div>`);
 }
 function renamePlayer(id) {
   const v = (document.getElementById('editName').value || '').trim();
   if (v && v !== P(id).name) {
-    if (S.players.some(p => p.id !== id && p.name.toLowerCase() === v.toLowerCase())) { toast('Tên này đã có'); return; }
+    if (S.players.some(p => p.id !== id && p.name.toLowerCase() === v.toLowerCase())) { toast(tx("Tên này đã có")); return; }
     P(id).name = v; save(); render();
   }
   closeSheet();
 }
 function openSettings() {
-  openSheet(`<h3>Cài đặt</h3><p>Áp dụng từ lần xếp tiếp theo.</p>${settingsHtml()}
-    <div class="row2"><button class="btn" onclick="closeSheet()">Đóng</button>
-    <button class="btn primary" onclick="closeSheet();generateRound();toast('Đã xếp lại theo cài đặt mới')">Xếp lại ngay</button></div>`);
+  openSheet(`<h3>${tx("Cài đặt")}</h3><p>${tx("Áp dụng từ lần xếp tiếp theo.")}</p>${settingsHtml()}
+    <div class="row2"><button class="btn" onclick="closeSheet()">${tx("Đóng")}</button>
+    <button class="btn primary" onclick="closeSheet();generateRound();toast(tx('Đã xếp lại theo cài đặt mới'))">${tx("Xếp lại ngay")}</button></div>`);
 }
 function setCourts(c) { S.settings.courts = Math.max(1, Math.min(MAX_COURTS, c)); save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
 function setFormat(f) {
   if (S.settings.format === f) return;
   S.settings.format = f; save();
-  if (curRound()) { generateRound(); toast(f === 'singles' ? 'Đã chuyển sang đánh đơn và xếp lại' : 'Đã chuyển sang đánh đôi và xếp lại'); } else render();
+  if (curRound()) { generateRound(); toast(f === 'singles' ? tx("Đã chuyển sang đánh đơn và xếp lại") : tx("Đã chuyển sang đánh đôi và xếp lại")); } else render();
   if (document.getElementById('sheet').classList.contains('show')) openSettings();
 }
 function setFlow(f) { S.settings.flow = f; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
@@ -142,29 +142,28 @@ function settingsHtml() {
   const act = activePlayers().length, K = perCourt(), maxC = Math.max(1, Math.floor(act / K));
   const used = Math.min(S.settings.courts, maxC), playing = used * K, rest = Math.max(0, act - playing);
   return `
-    <div class="field"><label>Môn chơi</label>${sportPicker(SP().key, 'setSport')}</div>
-    <div class="field"><label>Hình thức</label><div class="seg">
-      <button class="${S.settings.format !== 'singles' ? 'on' : ''}" onclick="setFormat('doubles')"><i class="i i-users"></i> Đánh đôi</button>
-      <button class="${S.settings.format === 'singles' ? 'on' : ''}" onclick="setFormat('singles')"><i class="i i-user"></i> Đánh đơn</button></div></div>
-    <div class="field"><label>Số sân thuê được hôm nay</label><div class="stepper">
-      <button onclick="setCourts(${S.settings.courts - 1})" ${S.settings.courts <= 1 ? 'disabled' : ''} aria-label="Bớt sân">−</button>
-      <div><b>${S.settings.courts}</b><span>sân</span></div>
-      <button onclick="setCourts(${S.settings.courts + 1})" ${S.settings.courts >= MAX_COURTS ? 'disabled' : ''} aria-label="Thêm sân">+</button></div></div>
-    <div class="field"><label>Tên sân <span class="hint-i">— vd: Sân 3, Sân 7 theo nhà thi đấu</span></label><div class="cnames">
-      ${Array.from({ length: S.settings.courts }, (_, i) => `<input type="text" maxlength="20" placeholder="Sân ${i + 1}"
-        value="${esc(((S.settings.courtNames || [])[i] || '').trim())}" onchange="setCourtName(${i},this.value)" aria-label="Tên sân ${i + 1}">`).join('')}</div></div>
-    <div class="field"><label>Cách luân phiên</label><div class="mode">
-      <button class="${S.settings.flow !== 'queue' ? 'on' : ''}" onclick="setFlow('rounds')"><b><i class="i i-refresh"></i> Theo vòng</b><span>Các sân đổi người cùng lúc</span></button>
-      <button class="${S.settings.flow === 'queue' ? 'on' : ''}" onclick="setFlow('queue')"><b><i class="i i-forward"></i> Xếp hàng</b><span>Sân nào xong, người chờ vào ngay</span></button>
+    <div class="field"><label>${tx("Môn chơi")}</label>${sportPicker(SP().key, 'setSport')}</div>
+    <div class="field"><label>${tx("Hình thức")}</label><div class="seg">
+      <button class="${S.settings.format !== 'singles' ? 'on' : ''}" onclick="setFormat('doubles')"><i class="i i-users"></i> ${tx("Đánh đôi")}</button>
+      <button class="${S.settings.format === 'singles' ? 'on' : ''}" onclick="setFormat('singles')"><i class="i i-user"></i> ${tx("Đánh đơn")}</button></div></div>
+    <div class="field"><label>${tx("Số sân thuê được hôm nay")}</label><div class="stepper">
+      <button onclick="setCourts(${S.settings.courts - 1})" ${S.settings.courts <= 1 ? 'disabled' : ''} aria-label="${tx("Bớt sân")}">−</button>
+      <div><b>${S.settings.courts}</b><span>${tx("sân")}</span></div>
+      <button onclick="setCourts(${S.settings.courts + 1})" ${S.settings.courts >= MAX_COURTS ? 'disabled' : ''} aria-label="${tx("Thêm sân")}">+</button></div></div>
+    <div class="field"><label>${tx("Tên sân")} <span class="hint-i">${tx("— vd: Sân 3, Sân 7 theo nhà thi đấu")}</span></label><div class="cnames">
+      ${Array.from({ length: S.settings.courts }, (_, i) => `<input type="text" maxlength="20" placeholder="${tx("Sân {0}", [i + 1])}"
+        value="${esc(((S.settings.courtNames || [])[i] || '').trim())}" onchange="setCourtName(${i},this.value)" aria-label="${tx("Tên sân {0}", [i + 1])}">`).join('')}</div></div>
+    <div class="field"><label>${tx("Cách luân phiên")}</label><div class="mode">
+      <button class="${S.settings.flow !== 'queue' ? 'on' : ''}" onclick="setFlow('rounds')"><b><i class="i i-refresh"></i> ${tx("Theo vòng")}</b><span>${tx("Các sân đổi người cùng lúc")}</span></button>
+      <button class="${S.settings.flow === 'queue' ? 'on' : ''}" onclick="setFlow('queue')"><b><i class="i i-forward"></i> ${tx("Xếp hàng")}</b><span>${tx("Sân nào xong, người chờ vào ngay")}</span></button>
     </div></div>
-    <div class="field"><label>Cách xếp</label><div class="mode">
-      <button class="${S.settings.mode === 'balanced' ? 'on' : ''}" onclick="setMode('balanced')"><b><i class="i i-scale"></i> Cân trình</b><span>2 đội ngang sức</span></button>
-      <button class="${S.settings.mode === 'random' ? 'on' : ''}" onclick="setMode('random')"><b><i class="i i-dice"></i> Ngẫu nhiên</b><span>Bỏ qua trình độ</span></button>
+    <div class="field"><label>${tx("Cách xếp")}</label><div class="mode">
+      <button class="${S.settings.mode === 'balanced' ? 'on' : ''}" onclick="setMode('balanced')"><b><i class="i i-scale"></i> ${tx("Cân trình")}</b><span>${tx("2 đội ngang sức")}</span></button>
+      <button class="${S.settings.mode === 'random' ? 'on' : ''}" onclick="setMode('random')"><b><i class="i i-dice"></i> ${tx("Ngẫu nhiên")}</b><span>${tx("Bỏ qua trình độ")}</span></button>
     </div></div>
     <label class="check" style="margin:-4px 2px 14px"><input type="checkbox" ${S.settings.autoLevel ? 'checked' : ''} onchange="setAutoLevel(this.checked)">
-      <i class="i i-trend"></i> Trình độ tự cập nhật theo kết quả thắng/thua</label>
-    <div class="field" ${S.settings.flow === 'queue' ? 'hidden' : ''}><label>Xem trước lịch</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
-      `<button class="${S.settings.preview === n ? 'on' : ''}" onclick="setPreview(${n})">${n ? n + ' vòng' : 'Tắt'}</button>`).join('')}</div></div>
-    ${act >= K ? `<div class="info"><i class="i i-info"></i> <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.
-      ${S.settings.courts > maxC ? `<br>Có ${S.settings.courts} sân nhưng chỉ đủ người cho ${maxC} sân.` : ''}</div></div>` : ''}`;
+      <i class="i i-trend"></i> ${tx("Trình độ tự cập nhật theo kết quả thắng/thua")}</label>
+    <div class="field" ${S.settings.flow === 'queue' ? 'hidden' : ''}><label>${tx("Xem trước lịch")}</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
+      `<button class="${S.settings.preview === n ? 'on' : ''}" onclick="setPreview(${n})">${n ? n + tx(" vòng") : tx("Tắt")}</button>`).join('')}</div></div>
+    ${act >= K ? `<div class="info"><i class="i i-info"></i> <div>${tx("Mỗi vòng")} <b>${playing}</b> ${tx("người vào {0} sân{1}.\n      {2}", [used, rest ? `, <b>${rest}</b> ${tx("người nghỉ luân phiên")}` : tx(", không ai phải nghỉ"), S.settings.courts > maxC ? `<br>${tx("Có {0} sân nhưng chỉ đủ người cho {1} sân.", [S.settings.courts, maxC])}` : ''])}</div></div>` : ''}`;
 }

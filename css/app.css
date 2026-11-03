@@ -454,3 +454,6 @@ nav button{font-size:10.5px}
 .tmatch.done .tsc{color:var(--text)}
 .champ{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#f5b82e,#ffd76a);color:#3b2a00;border-radius:20px;padding:14px 18px;font-size:34px;box-shadow:var(--shadow);margin-bottom:6px}
 .champ b{display:block;font-size:19px} .champ .small{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.8}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2 .btn{min-height:46px;font-size:14px}

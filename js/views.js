@@ -45,7 +45,7 @@ function renderHero() {
   document.getElementById('hero').innerHTML = `
     <div class="hero-top"><div class="logo img"><img src="icons/favicon.svg" alt=""></div>
       <div class="ht"><h1>${room ? esc(room.name) : 'Xếp Sân'}</h1>
-        <div class="rsub">${room ? `<i class="dot ${roomStatus}"></i>${room.admin ? '✏️ Quản lý' : '👁 Chỉ xem'} · ` : ''}${SP().emoji} ${SP().name}${room ? ` · #${esc(room.id)}` : ' · dùng trên máy này'}</div></div>
+        <div class="rsub">${room ? `<i class="dot ${roomStatus}"></i>${isMain() ? '👑 Quản lý' : room.admin ? '✏️ Quản lý phụ' : '👁 Chỉ xem'} · ` : ''}${SP().emoji} ${SP().name}${room ? ` · #${esc(room.id)}` : ' · dùng trên máy này'}</div></div>
       <button class="room-btn" onclick="openRoomSheet()">${room ? '👥 Phòng' : CLOUD_ON ? '☁️ Các phòng' : '☁️ Phòng'}</button></div>
     <div class="pills">
       <div class="pill"><b>${act}</b><span>có mặt</span></div>

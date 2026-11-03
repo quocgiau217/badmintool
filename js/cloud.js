@@ -3,13 +3,14 @@
  * roomKeys/<mã phòng>         <khoá xem>            không ai đọc được; để Rules biết ai được xoá phòng
  * data/<SHA256(mã+mật khẩu)>  {s: JSON, t, by, v}   ai biết mật khẩu mới tính ra được địa chỉ này; v = số phiên bản
  * adminKeys/<khoá xem>        SHA256(mã+mã quản lý) không ai đọc được
- * admins/<khoá xem>/<uid>     thiết bị đã nhập đúng mã quản lý -> được ghi data
- */
+ * admins/<khoá xem>/<uid>     thiết bị đã nhập đúng mã quản lý (chính hoặc phụ) -> được ghi data
+ * subKeys/<khoá xem>/<băm mã phụ> {n: tên, t}   mã quản lý phụ: chỉ xếp sân / sửa, không đổi được cài đặt phòng
+ * Quản lý chính = thiết bị có admins/<k>/<uid> bằng đúng adminKeys/<k> (Rules kiểm tra ở máy chủ). */
 const CLOUD_ON = !!window.FIREBASE_CONFIG;
 const FB_VER = '10.12.2';
 let FB = null, fbDb = null, myUid = null, cloudReady = null;
 let roomStatus = 'connecting'; // connecting | online | offline
-let unsubRoom = null, lastRemote = '', pushT = null;
+let unsubRoom = null, lastRemote = '', pushT = null, unsubMeta = null;
 // chống ghi đè: mỗi lần ghi tăng v; chỉ ghi được nếu bản trên máy chủ vẫn là bản mình đã nhận (remoteV)
 let remoteV = 0, roomSynced = false, pushing = false, pushAgain = false, pendingS = null;
 // Sảnh phòng: màn hình đầu tiên khi mở web (nếu đã bật Firebase)
@@ -27,6 +28,18 @@ const normId = s => String(s || '').trim().toLowerCase().normalize('NFD').replac
   .replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
 const dbRef = path => FB.ref(fbDb, path);
 const canEdit = () => !room || !!room.admin;
+const isMain = () => !!(room && room.admin && room.main !== false);
+// vai trò của máy này trong phòng: 'main' | 'helper' | 'none'
+async function adminRole(key) {
+  const adm = await FB.get(dbRef('admins/' + key + '/' + myUid)).catch(() => null);
+  if (!adm || !adm.exists()) return 'none';
+  const sub = await FB.get(dbRef('subKeys/' + key + '/' + adm.val())).catch(() => null);
+  return sub && sub.exists() ? 'helper' : 'main';
+}
+// quên mật khẩu đã lưu của phòng (khi mật khẩu bị đổi) nhưng vẫn giữ phòng trong danh sách
+function forgetKey(id) {
+  try { localStorage.setItem(LS_RECENT, JSON.stringify(recentRooms().filter(x => x.id !== id))); } catch (e) {}
+}
 const syncPart = () => ({ players: S.players, settings: S.settings, session: S.session, archive: S.archive || [] });
 
 async function loadFirebase() {
@@ -108,15 +121,25 @@ function applyRemoteStr(s) {
 }
 function subscribeRoom() {
   if (unsubRoom) unsubRoom();
-  const key = room.key;
+  const key = room.key, rid = room.id;
+  if (unsubMeta) unsubMeta();
+  unsubMeta = FB.onValue(dbRef('rooms/' + rid), s => { // tên phòng đổi -> mọi máy thấy ngay
+    const m = s.val(); if (!room || room.id !== rid || !m) return;
+    if (m.name && m.name !== room.name) { room.name = String(m.name).slice(0, 40); rememberRoom(room); renderHero(); }
+  }, () => {});
   remoteV = 0; roomSynced = false;
   unsubRoom = FB.onValue(dbRef('data/' + key), snap => {
     if (!room || room.key !== key) return;
     const v = snap.val();
-    if (!v) { // phòng đã bị quản lý xoá
-      const id = room.id; if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins();
-      dropRoomLocal(id); room = null; lastRemote = ''; S = loadState(); lobby = true; selSlot = null; focusId = null;
-      closeSheet(); render(); toast('Phòng này đã bị người quản lý xoá'); return;
+    if (!v) { // phòng bị xoá, hoặc người quản lý vừa đổi mật khẩu
+      const id = room.id, name = room.name; if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins();
+      room = null; lastRemote = ''; S = loadState(); lobby = true; selSlot = null; focusId = null;
+      closeSheet(); render();
+      FB.get(dbRef('rooms/' + id)).then(r => {
+        if (r.exists()) { forgetKey(id); render(); openJoin(id, name); toast('🔒 Người quản lý vừa đổi mật khẩu phòng — hãy nhập mật khẩu mới'); }
+        else { dropRoomLocal(id); render(); toast('Phòng này đã bị người quản lý xoá'); }
+      }).catch(() => toast('Không còn truy cập được phòng này'));
+      return;
     }
     if (typeof v.s !== 'string') return;
     remoteV = v.v || 0;
@@ -141,7 +164,7 @@ function recentRooms() { try { return JSON.parse(localStorage.getItem(LS_RECENT)
 function rememberRoom(r) {
   const old0 = recentRooms().find(x => x.id === r.id);
   const list = recentRooms().filter(x => x.id !== r.id);
-  list.unshift({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '', sport: r.sport || (old0 && old0.sport) || 'badminton' });
+  list.unshift({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, main: r.main !== false && !!r.admin, pw: r.pw || '', sport: r.sport || (old0 && old0.sport) || 'badminton' });
   try { localStorage.setItem(LS_RECENT, JSON.stringify(list.slice(0, 10))); } catch (e) {}
 }
 function forgetRoom(id) {
@@ -200,7 +223,7 @@ function enterRoom(info) {
 function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) { subscribeRoom(); subscribeCheckins(); } }).catch(() => {}); }
 // mất mạng: vẫn mở được phòng đã vào trên máy này, dùng dữ liệu đã lưu; có mạng lại sẽ tự đồng bộ
 function openRoomOffline(r) {
-  enterRoom({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '', sport: r.sport });
+  enterRoom({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, main: r.main !== false && !!r.admin, pw: r.pw || '', sport: r.sport });
   toast('📴 Đang mất mạng — dùng dữ liệu đã lưu, có mạng sẽ tự đồng bộ');
 }
 const isNetErr = e => /network|offline|unavailable|fetch|timeout/i.test(String(e && (e.code || e.message)));
@@ -211,9 +234,9 @@ async function openRoomByKey(id, key, pw) {
   if (!r.exists()) { dropRoomLocal(id); if (lobby) render(); throw new Error('Không tìm thấy phòng "' + id + '" — có thể phòng đã bị xoá'); }
   const d = await FB.get(dbRef('data/' + key));
   if (!d.exists()) throw new Error('Sai mật khẩu');
-  const adm = await FB.get(dbRef('admins/' + key + '/' + myUid)).catch(() => null);
+  const role = await adminRole(key);
   const old = recentRooms().find(x => x.id === id);
-  enterRoom({ id, name: r.val().name, key, admin: !!(adm && adm.exists()), pw: pw || (old && old.pw) || '', sport: sportOf(r.val().sport).key });
+  enterRoom({ id, name: r.val().name, key, admin: role !== 'none', main: role === 'main', pw: pw || (old && old.pw) || '', sport: sportOf(r.val().sport).key });
 }
 async function joinRoom(idRaw, pw) {
   const id = normId(idRaw);
@@ -251,7 +274,8 @@ async function unlockAdmin(code) {
   const ak = await adminKeyOf(room.id, code);
   try { await FB.set(dbRef('admins/' + room.key + '/' + myUid), ak); }
   catch (e) { throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Sai mã quản lý' : cloudError(e)); }
-  room.admin = true; rememberRoom(room); closeSheet(); render(); toast('🔓 Đã mở quyền quản lý');
+  room.admin = true; room.main = (await adminRole(room.key)) === 'main';
+  rememberRoom(room); closeSheet(); render(); toast(room.main ? '🔓 Đã mở quyền quản lý' : '🔓 Đã mở quyền quản lý phụ');
 }
 function leaveRoom() {
   if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins();
@@ -262,7 +286,7 @@ function leaveRoom() {
 }
 // Xoá hẳn phòng trên máy chủ (chỉ quản lý) — mọi người trong phòng sẽ bị đưa về danh sách phòng
 function openDeleteRoom() {
-  if (!room || !room.admin) return lockedToast();
+  if (!isMain()) return toast('Chỉ quản lý chính được xoá phòng');
   openSheet(`<h3>🗑️ Xoá phòng "${esc(room.name)}"?</h3>
     <p>Toàn bộ người chơi, lịch và kết quả của phòng sẽ bị <b>xoá vĩnh viễn</b> với tất cả mọi người. Không thể hoàn tác.</p>
     <div class="field"><label>Gõ mã phòng <b>${esc(room.id)}</b> để xác nhận</label>
@@ -276,10 +300,10 @@ async function deleteRoom() {
   const { id, key } = room;
   if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins(); clearTimeout(pushT);
   try {
-    await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['checkin/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
+    await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['checkin/' + key]: null, ['subKeys/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
   } catch (e) {
     subscribeRoom();
-    throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Không xoá được — phòng tạo từ bản cũ, hãy xoá trong Firebase Console' : cloudError(e));
+    throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Không xoá được — cần quyền quản lý chính (phòng tạo từ bản cũ thì xoá trong Firebase Console)' : cloudError(e));
   }
   dropRoomLocal(id); room = null; lastRemote = '';
   S = loadState(); selSlot = null; focusId = null; lobby = true;
@@ -313,13 +337,18 @@ function openRoomSheet() {
   openSheet(`
     <div class="room-card"><div class="logo img"><img src="icons/favicon.svg" alt=""></div><div style="min-width:0"><h3 style="margin:0">${esc(room.name)}</h3>
       <div class="small muted">Mã phòng: <b>${esc(room.id)}</b>${room.pw ? ` · Mật khẩu: <b>${esc(room.pw)}</b>` : ''}</div></div></div>
-    <div class="room-meta"><span class="role ${room.admin ? 'adm' : ''}">${room.admin ? '✏️ Quản lý' : '👁 Chỉ xem'}</span>
+    <div class="room-meta"><span class="role ${room.admin ? 'adm' : ''}">${isMain() ? '👑 Quản lý chính' : room.admin ? '✏️ Quản lý phụ' : '👁 Chỉ xem'}</span>
       <span class="small muted"><i class="dot ${roomStatus}"></i> ${statusText()}</span></div>
     <div style="display:grid;gap:10px;margin-top:16px">
       <button class="btn primary block" onclick="shareInvite()">📨 Mời mọi người vào phòng</button>
       ${room.admin ? '' : `<button class="btn block" onclick="openUnlock()">🔑 Nhập mã quản lý để sửa</button>`}
+      ${isMain() ? `<div class="grid2">
+        <button class="btn" onclick="openRename()">✏️ Đổi tên</button>
+        <button class="btn" onclick="openHelpers()">🧑‍🤝‍🧑 Mã phụ</button>
+        <button class="btn" onclick="openChangePw()">🔒 Đổi mật khẩu</button>
+        <button class="btn" onclick="openChangeCode()">🔑 Đổi mã QL</button></div>` : ''}
       <button class="btn block" onclick="leaveRoom()">🚪 Rời phòng · về danh sách phòng</button>
-      ${room.admin ? `<button class="btn danger block" onclick="openDeleteRoom()">🗑️ Xoá phòng</button>` : ''}
+      ${isMain() ? `<button class="btn danger block" onclick="openDeleteRoom()">🗑️ Xoá phòng</button>` : ''}
     </div>`);
 }
 /* ---------- sảnh phòng ---------- */

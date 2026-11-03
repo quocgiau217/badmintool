@@ -35,7 +35,7 @@ function subscribeCheckins() {
     if (applyCheckins()) render();
   }, () => {});
 }
-function stopCheckins() { if (unsubCheckin) unsubCheckin(); unsubCheckin = null; checkins = {}; }
+function stopCheckins() { if (unsubCheckin) unsubCheckin(); unsubCheckin = null; checkins = {}; if (typeof unsubMeta === 'function') { unsubMeta(); unsubMeta = null; } }
 // áp các lượt tự điểm danh mới hơn lần sửa cuối của quản lý (p.ct)
 function applyCheckins() {
   let changed = false, absorbed = false;

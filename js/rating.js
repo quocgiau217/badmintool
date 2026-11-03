@@ -20,7 +20,7 @@ function ratingsNow() {
   const R = {};
   S.players.forEach(p => { R[p.id] = r0Of(p); });
   const avg = ids => ids.reduce((s, id) => s + (R[id] != null ? R[id] : 1000), 0) / ids.length;
-  resultMatches(S.session.rounds).forEach(c => {
+  resultMatches(S.session.rounds).concat(tourCourts()).forEach(c => {
     const ea = 1 / (1 + Math.pow(10, (avg(c.b) - avg(c.a)) / 400)), sa = c.winner === 'a' ? 1 : 0;
     const margin = c.score ? 1 + Math.min(Math.abs(c.score[0] - c.score[1]), 10) / 20 : 1; // thắng đậm tăng nhiều hơn (tối đa ×1.5)
     const d = ELO_K * margin * (sa - ea);
@@ -47,7 +47,7 @@ const fmtRating = r => Math.round(r).toLocaleString('vi-VN');
 
 /* ---------- lưu tổng kết buổi ---------- */
 function sessionSummary() {
-  const done = S.session.rounds.filter(r => r.done);
+  const tc = tourCourts(), done = S.session.rounds.filter(r => r.done).concat(tc.length ? [{ courts: tc, resting: [], done: true, q: true }] : []);
   const games = done.reduce((s, r) => s + r.courts.length, 0);
   if (!games) return null;
   const st = computeStats(done), p = {}, pairs = {};
@@ -87,7 +87,7 @@ function bestPairs(pairs, minGames) {
 }
 function sessionPairs() {
   const pairs = {};
-  resultMatches(S.session.rounds.filter(r => r.done)).forEach(c => ['a', 'b'].forEach(t => {
+  resultMatches(S.session.rounds.filter(r => r.done)).concat(tourCourts()).forEach(c => ['a', 'b'].forEach(t => {
     if (c[t].length !== 2) return;
     const k = pairKey(c[t][0], c[t][1]), v = pairs[k] = pairs[k] || [0, 0]; v[0]++; if (c.winner === t) v[1]++;
   }));

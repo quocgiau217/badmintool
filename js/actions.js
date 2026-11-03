@@ -76,18 +76,26 @@ let ED = null;
 const nmJoin = ids => ids.map(id => esc(P(id).name)).join(' & ');
 function editMatch(ri, ci) {
   const r = S.session.rounds[ri], c = r && r.courts[ci]; if (!c) return;
+  openResult({
+    title: `Kết quả · ${r.q ? 'Trận ' + r.no : 'Vòng ' + r.no} · ${esc(cName(c, ci))}`, a: c.a, b: c.b, winner: c.winner, score: c.score,
+    note: r.done ? ' Thống kê sẽ được tính lại.' : '',
+    save(w, sc) { c.winner = w; if (sc) c.score = sc; else delete c.score; },
+  });
+}
+// Bảng nhập kết quả dùng chung (trận thường & trận giải đấu): o = {title, a:[ids], b:[ids], winner, score, note, save(w, score|null)}
+function openResult(o) {
   haptic();
-  ED = { ri, ci, w: c.winner || null };
+  ED = Object.assign({}, o, { w: o.winner || null });
   const team = t => `<div class="res-col">
       <button class="res-team ${t}" id="rt_${t}" onclick="edPick('${t}')">
-        <span class="res-tag">ĐỘI ${t.toUpperCase()}</span>
-        ${c[t].map(id => `<span class="res-p">${avatar(P(id), 'xs')}<span>${esc(P(id).name)}</span></span>`).join('')}
+        <span class="res-tag">${o.labels ? esc(o.labels[t]) : 'ĐỘI ' + t.toUpperCase()}</span>
+        ${o[t].map(id => `<span class="res-p">${avatar(P(id), 'xs')}<span>${esc(P(id).name)}</span></span>`).join('')}
         <span class="res-win">🏆 Thắng</span></button>
       <input class="score" id="sc_${t}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="–"
-        value="${c.score ? c.score[t === 'a' ? 0 : 1] : ''}" oninput="edScore()" aria-label="Điểm đội ${t.toUpperCase()}">
+        value="${o.score ? o.score[t === 'a' ? 0 : 1] : ''}" oninput="edScore()" aria-label="Điểm đội ${t.toUpperCase()}">
     </div>`;
-  openSheet(`<h3>Kết quả · Vòng ${r.no} · ${esc(cName(c, ci))}</h3>
-    <p>Chạm đội thắng, hoặc nhập tỉ số (không bắt buộc).${r.done ? ' Thống kê sẽ được tính lại.' : ''}</p>
+  openSheet(`<h3>${o.title}</h3>
+    <p>Chạm đội thắng, hoặc nhập tỉ số (không bắt buộc).${o.note || ''}</p>
     <div class="res">${team('a')}<div class="res-vs">VS</div>${team('b')}</div>
     <div class="quick">${SP().quick.map(n => `<button class="btn sm" onclick="edQuick(${n})">Tới ${n}</button>`).join('')}</div>
     <div class="row2"><button class="btn" onclick="edClear()">Xoá kết quả</button>
@@ -119,15 +127,13 @@ function edQuick(n) {
   win.value = n; if (lose.value === '' || +lose.value >= n) lose.value = ''; (lose.value === '' ? lose : win).focus();
 }
 function edClear() {
-  const c = S.session.rounds[ED.ri].courts[ED.ci];
-  c.winner = null; delete c.score; save(); closeSheet(); render(); toast('Đã xoá kết quả');
+  ED.save(null, null); save(); closeSheet(); render(); toast('Đã xoá kết quả');
 }
 function edSave() {
   const a = edVal('a'), b = edVal('b');
   if ((a == null) !== (b == null)) { toast('Nhập đủ điểm cả 2 đội, hoặc để trống cả 2'); return; }
   if (a != null && a === b) { toast('Tỉ số không thể hoà'); return; }
-  const c = S.session.rounds[ED.ri].courts[ED.ci];
-  if (a != null) { c.score = [a, b]; c.winner = a > b ? 'a' : 'b'; } else { delete c.score; c.winner = ED.w; }
+  if (a != null) ED.save(a > b ? 'a' : 'b', [a, b]); else ED.save(ED.w, null);
   haptic(); save(); closeSheet(); render(); toast('Đã lưu kết quả');
 }
 // chạm 2 ô để đổi chỗ (kể cả với người đang nghỉ)

@@ -437,3 +437,20 @@ nav button{font-size:10.5px}
 .qitem.next .chip{background:var(--accent-soft)}
 
 .meta .up{color:var(--brand);font-weight:700} .meta .down{color:var(--danger);font-weight:700}
+
+/* ---------- giải đấu ---------- */
+.tteams{display:flex;flex-direction:column;gap:6px}
+.tteam{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tteam .tn{width:24px;height:24px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--muted)}
+.tteam .chipbtn{height:32px}
+.tlist{padding:2px 12px}
+.tmatch{display:flex;align-items:center;gap:10px;width:100%;padding:10px 0;border-top:1px dashed var(--line);text-align:left}
+.tmatch:first-child{border-top:0}
+.tsides{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.tside{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tside.w{color:var(--brand);font-weight:800}
+.tside.l{color:var(--muted)}
+.tsc{flex:none;min-width:44px;text-align:right;font-weight:800;color:var(--muted)}
+.tmatch.done .tsc{color:var(--text)}
+.champ{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#f5b82e,#ffd76a);color:#3b2a00;border-radius:20px;padding:14px 18px;font-size:34px;box-shadow:var(--shadow);margin-bottom:6px}
+.champ b{display:block;font-size:19px} .champ .small{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.8}

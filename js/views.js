@@ -60,8 +60,9 @@ function barHtml() {
   if (S.tab === 'players' && act >= perCourt())
     return `<div class="bar-in"><button class="btn primary" onclick="goTab('play')">Sang xếp sân ${ICON.next}</button></div>`;
   if (S.tab === 'play' && act >= perCourt()) {
+    if (tour() && playView === 'tour') return '';
     if (!r) return `<div class="bar-in"><button class="btn primary" onclick="haptic();generateRound()">${isQueue() ? '▶️ Bắt đầu xếp hàng' : `🎲 Xếp vòng ${S.session.rounds.filter(x => !x.q).length + 1}`}</button></div>`;
-    if (isQueue()) return '';
+    if (isQueue() || (tour() && playView === 'tour')) return '';
     return `<div class="bar-in"><button class="btn ghost" onclick="haptic();generateRound();toast('Đã xếp lại')" aria-label="Xếp lại">${ICON.shuffle}</button>
       <button class="btn primary" onclick="haptic();finishRound()">Xong · Vòng ${r.no + 1} ${ICON.next}</button></div>`;
   }
@@ -110,7 +111,14 @@ function chip(id, ref, team) {
     ${avatar(p, 'sm')}<span class="nm">${esc(p.name)}</span>${S.settings.mode === 'balanced' ? `<span class="lvn">${lvOf(p)}</span>` : ''}</button>`;
 }
 
-function viewPlay() { return meCard('play') + viewPlayInner(); }
+function viewPlay() {
+  const t = tour(); if (!t) playView = null; else if (!playView) playView = 'tour'; // có giải mới thì mặc định xem giải
+  const seg = t ? `<div class="seg sm" style="margin-bottom:12px"><button class="${playView !== 'tour' ? 'on' : ''}" onclick="playView='rounds';render()">${SP().emoji} Xếp sân</button>
+    <button class="${playView === 'tour' ? 'on' : ''}" onclick="playView='tour';render()">🏆 Giải đấu</button></div>` : '';
+  if (t && playView === 'tour') return seg + viewTour();
+  const act = activePlayers().length, canTour = canEdit() && !t && act >= 3 * teamSize();
+  return meCard('play') + seg + viewPlayInner() + (canTour ? `<button class="btn ghost block" style="margin-top:16px" onclick="openTourCreate()">🏆 Tổ chức giải đấu nhỏ (vòng tròn / loại trực tiếp)</button>` : '');
+}
 function viewPlayInner() {
   const act = activePlayers().length, r = curRound();
   if (act < perCourt()) return `<div class="card empty"><div class="big">${SP().emoji}</div><h3>Cần ít nhất ${perCourt()} người</h3>
@@ -214,14 +222,14 @@ function viewStatsLong() {
 }
 function viewStats() {
   if (statsRange !== 'session') return viewStatsLong();
-  const rounds = S.session.rounds, doneR = rounds.filter(r => r.done);
+  const rounds = S.session.rounds, doneR = rounds.filter(r => r.done), tc = tourCourts();
   const R = autoLv() ? ratingsNow() : null;
-  const st = computeStats(doneR);
+  const st = computeStats(tc.length ? doneR.concat([{ courts: tc, resting: [], done: true }]) : doneR);
   const list = S.players.filter(p => p.active || st.played[p.id] || st.sat[p.id])
     .sort((a, b) => (st.wins[b.id] - st.wins[a.id]) || (st.diff[b.id] - st.diff[a.id]) || (st.played[b.id] - st.played[a.id]) || a.name.localeCompare(b.name));
-  const anyScore = doneR.some(r => r.courts.some(c => c.score));
-  const matches = doneR.reduce((s, r) => s + r.courts.length, 0);
-  const anyWin = doneR.some(r => r.courts.some(c => c.winner));
+  const anyScore = doneR.some(r => r.courts.some(c => c.score)) || tc.some(c => c.score);
+  const matches = doneR.reduce((s, r) => s + r.courts.length, 0) + tc.length;
+  const anyWin = doneR.some(r => r.courts.some(c => c.winner)) || tc.length > 0;
   const medal = ['🥇', '🥈', '🥉'];
   const rows = list.map((p, i) => {
     const pl = st.played[p.id] || 0, w = st.wins[p.id] || 0, rate = pl ? Math.round(w / pl * 100) : 0;
@@ -243,13 +251,13 @@ function viewStats() {
         <div class="side r ${c.winner === 'b' ? 'w' : ''}">${nm(c.b)}</div></button>`).join('')}
         ${r.resting.length ? `<div class="small muted" style="padding-top:6px">☕ Nghỉ: ${r.resting.map(id => esc(P(id).name)).join(', ')}</div>` : ''}</div></details>`;
   }).join('');
-  if (!rounds.length) return `${statsSeg()}<div class="card empty"><div class="big">📊</div><h3>Chưa có dữ liệu</h3><p>Thống kê sẽ hiện sau khi chơi xong vòng đầu tiên.</p>
+  if (!rounds.length && !tc.length) return `${statsSeg()}<div class="card empty"><div class="big">📊</div><h3>Chưa có dữ liệu</h3><p>Thống kê sẽ hiện sau khi chơi xong vòng đầu tiên.</p>
     ${canEdit() ? `<button class="btn primary" onclick="goTab('play')">Bắt đầu xếp sân</button>` : ''}</div>`;
   return `${statsSeg()}
     <div class="tiles"><div class="tile"><b>${doneR.length}</b><span>${isQueue() ? 'trận xong' : 'vòng xong'}</span></div>
       <div class="tile"><b>${matches}</b><span>trận đấu</span></div><div class="tile"><b>${list.length}</b><span>người chơi</span></div></div>
     <div class="sec-title"><h2>${anyWin ? 'Bảng xếp hạng' : 'Số trận mỗi người'}</h2></div>
-    ${rows && doneR.length ? `<div class="plist">${rows}</div>` : `<div class="card small muted" style="text-align:center">Bấm "Xong" sau mỗi vòng để tính thống kê</div>`}
+    ${rows && (doneR.length || tc.length) ? `<div class="plist">${rows}</div>` : `<div class="card small muted" style="text-align:center">Bấm "Xong" sau mỗi vòng để tính thống kê</div>`}
     ${pairsHtml(bestPairs(sessionPairs(), 2), '🤝 Cặp ăn ý buổi này')}
     <div class="sec-title"><h2>Lịch sử</h2></div>
     <div class="tip" style="margin:0 4px 10px" ${canEdit() ? '' : 'hidden'}>✏️ <span>Chạm vào một trận để ghi hoặc sửa kết quả, kể cả các vòng đã xong.</span></div>${hist}

@@ -69,6 +69,19 @@ function sanitizeState(raw) {
   if (ses.plan) session.plan = arr(ses.plan).slice(0, 8).map(cleanRound);
   if (typeof ses.planSig === 'string') session.planSig = ses.planSig;
   if (ses.started != null) session.started = num(ses.started);
+  if (ses.tour) {
+    const t = obj(ses.tour), seenT = new Set();
+    const teams = arr(t.teams).filter(x => isId(obj(x).id) && !seenT.has(x.id) && seenT.add(x.id)).slice(0, 64).map(x => ({ id: x.id, p: ids(x.p).slice(0, 2) })).filter(x => x.p.length);
+    const res = {};
+    Object.entries(obj(t.res)).forEach(([k, r]) => {
+      r = obj(r);
+      if (/^r\d{1,2}m\d{1,3}$/.test(k) && seenT.has(r.a) && seenT.has(r.b) && ['a', 'b'].includes(r.winner)) {
+        res[k] = { a: r.a, b: r.b, winner: r.winner };
+        if (Array.isArray(r.score) && r.score.length === 2) res[k].score = [int(r.score[0], 0, 99, 0), int(r.score[1], 0, 99, 0)];
+      }
+    });
+    if (teams.length >= 2) session.tour = { fmt: oneOf(t.fmt, ['rr', 'ko'], 'rr'), teams, res, created: num(t.created) };
+  }
   if (ses.money) {
     const m = obj(ses.money);
     session.money = {

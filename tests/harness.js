@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const FILES = ['state.js', 'algo.js', 'actions.js'];
+const FILES = ['state.js', 'algo.js', 'actions.js', 'money.js'];
 
 function loadApp() {
   const store = new Map();
@@ -23,6 +23,7 @@ function loadApp() {
   get S() { return S; }, set S(v) { S = v; },
   defaultState, buildRound, bestArrangement, computeStats, generateRound, finishRound, giveCredit, addPlayers,
   togglePlayer, addCourt, removeCourt, activePlayers, curRound, ensurePlan, pairKey, P, uid, sanitize: sanitizeState,
+  parseMoney, moneyBill, saveCost, setMoneyMode, toggleExclude, togglePaid,
 };`, ctx, { filename: 'app-bundle.js' });
   return ctx.app;
 }

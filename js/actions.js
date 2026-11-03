@@ -56,7 +56,7 @@ function finishRound() {
 }
 function newSession() {
   confirmSheet('Bắt đầu buổi mới?', 'Lịch sử và thống kê buổi hiện tại sẽ bị xoá. Danh sách người chơi vẫn được giữ.', 'Bắt đầu lại', () => {
-    S.session = { rounds: [], credit: {} }; selSlot = null; save(); render(); toast('Đã tạo buổi mới');
+    S.session = { rounds: [], credit: {}, started: Date.now() }; selSlot = null; save(); render(); toast('Đã tạo buổi mới');
   });
 }
 function setWinner(ci, t) {

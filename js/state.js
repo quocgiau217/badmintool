@@ -58,12 +58,23 @@ function sanitizeState(raw) {
     preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
     courtNames: arr(set.courtNames).slice(0, 10).map(x => str(x, 20)),
   };
+  const bank = obj(set.bank);
+  if (/^\d{6}$/.test(bank.bin) && /^[0-9A-Za-z]{1,30}$/.test(bank.acc)) settings.bank = { bin: bank.bin, acc: bank.acc, name: str(bank.name, 50) };
   const session = {
     rounds: arr(ses.rounds).slice(0, 2000).map(cleanRound),
     credit: idMap(ses.credit, v => int(v, 0, 999, 0)),
   };
   if (ses.plan) session.plan = arr(ses.plan).slice(0, 8).map(cleanRound);
   if (typeof ses.planSig === 'string') session.planSig = ses.planSig;
+  if (ses.started != null) session.started = num(ses.started);
+  if (ses.money) {
+    const m = obj(ses.money);
+    session.money = {
+      items: arr(m.items).filter(x => isId(obj(x).id)).slice(0, 30).map(x => ({ id: x.id, label: str(x.label, 40) || 'Khoản chi', amount: int(x.amount, 0, 1e9, 0) })),
+      mode: oneOf(m.mode, ['equal', 'matches'], 'equal'),
+      paid: idMap(m.paid, v => (v ? true : undefined)), exclude: idMap(m.exclude, v => (v ? true : undefined)),
+    };
+  }
   return { players, settings, session };
 }
 let S = loadState();

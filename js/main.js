@@ -4,7 +4,8 @@
 // Chặn mọi thao tác sửa khi đang ở chế độ chỉ xem
 ['addPlayers', 'quickAdd', 'togglePlayer', 'setLevel', 'removePlayer', 'editPlayer', 'renamePlayer', 'generateRound', 'finishRound',
  'newSession', 'setWinner', 'tapSlot', 'editMatch', 'replan', 'openSettings', 'setCourts', 'setMode', 'setPreview', 'setAllActive',
- 'setCourtName', 'openCourt', 'removeCourt', 'addCourt'].forEach(n => {
+ 'setCourtName', 'openCourt', 'removeCourt', 'addCourt',
+ 'saveCost', 'removeCost', 'setMoneyMode', 'togglePaid', 'toggleExclude', 'openCost', 'openBank', 'saveBank'].forEach(n => {
   const f = window[n]; if (typeof f !== 'function') return;
   window[n] = function () { if (!canEdit()) { lockedToast(); return; } return f.apply(this, arguments); };
 });

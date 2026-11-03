@@ -15,13 +15,13 @@ function render() {
   const act = activePlayers().length;
   const rounds = S.session.rounds, r = curRound();
   renderHero();
-  const tabs = [['players', 'Người chơi', ICON.users], ['play', 'Xếp sân', ICON.court], ['stats', 'Thống kê', ICON.chart]];
+  const tabs = [['players', 'Người chơi', ICON.users], ['play', 'Xếp sân', ICON.court], ['stats', 'Thống kê', ICON.chart], ['money', 'Tiền', ICON.money]];
   document.getElementById('nav').innerHTML = tabs.map(([k, l, ic]) =>
     `<button class="${S.tab === k ? 'on' : ''}" onclick="goTab('${k}')">${ic}${l}${k === 'play' && r && S.tab !== 'play' ? `<span class="badge">${r.no}</span>` : ''}</button>`).join('');
   ensurePlan();
   if (focusId && !S.players.some(p => p.id === focusId)) focusId = null;
   const app = document.getElementById('app');
-  app.innerHTML = S.tab === 'players' ? viewPlayers() : S.tab === 'play' ? viewPlay() : viewStats();
+  app.innerHTML = S.tab === 'players' ? viewPlayers() : S.tab === 'play' ? viewPlay() : S.tab === 'money' ? viewMoney() : viewStats();
   const bar = document.getElementById('bar');
   bar.innerHTML = canEdit() ? barHtml() : '';
   document.body.classList.toggle('has-bar', !!bar.innerHTML.trim());

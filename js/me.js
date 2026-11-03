@@ -12,7 +12,7 @@ function myPid() {
 function setMe(id) {
   try { id ? localStorage.setItem(meKey(), id) : localStorage.removeItem(meKey()); } catch (e) {}
   lastMySpot = null; closeSheet(); render();
-  if (id) toast(`Xin chào ${P(id).name}! 👋`);
+  if (id) toast(`Xin chào ${P(id).name}! `);
 }
 function openWhoAmI() {
   haptic();
@@ -52,9 +52,9 @@ async function checkInMe(a) {
   const id = myPid(); if (!id || !room) return;
   haptic();
   checkins[id] = { a, t: nowSrv() }; applyCheckins(); render();
-  toast(a ? '✅ Đã điểm danh: có mặt' : '👋 Đã báo: về / vắng');
+  toast(a ? 'Đã điểm danh: có mặt' : 'Đã báo: về / vắng');
   try { await cloudInit(); await FB.set(dbRef(`checkin/${room.key}/${id}`), { a, t: FB.serverTimestamp() }); }
-  catch (e) { toast('⚠️ Chưa gửi được điểm danh: ' + cloudError(e)); }
+  catch (e) { toast('Chưa gửi được điểm danh: ' + cloudError(e), 'warn'); }
 }
 
 /* ---------- vị trí của tôi & báo tới lượt ---------- */
@@ -83,14 +83,14 @@ function checkMyTurn() {
   const nextUp = !!(s && s.rest && isQueue() && s.r.resting.indexOf(myPid()) < perCourt());
   if (lastNextUp === false && nextUp) {
     try { navigator.vibrate && navigator.vibrate(150); } catch (e) {}
-    toast('⏳ Chuẩn bị! Bạn vào sân ở lượt tới');
+    toast('Chuẩn bị! Bạn vào sân ở lượt tới');
   }
   lastNextUp = s ? nextUp : null;
 }
 function notifyTurn(s) {
   const msg = `${cName(s.c, s.ci)}${s.partner.length ? ' · cùng ' + names(s.partner) : ''} · gặp ${names(s.opp)}`;
   try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
-  toast(`🔔 Tới lượt bạn! ${msg}`);
+  toast(`Tới lượt bạn! ${msg}`);
   if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
     const opts = { body: msg, icon: 'icons/icon-192.png', badge: 'icons/favicon-32.png', tag: 'turn', renotify: true };
     const title = `${SP().emoji} Tới lượt bạn vào sân!`;
@@ -99,7 +99,7 @@ function notifyTurn(s) {
   }
 }
 async function enableNotify() {
-  try { const p = await Notification.requestPermission(); toast(p === 'granted' ? '🔔 Sẽ báo khi tới lượt bạn' : 'Chưa bật được thông báo'); } catch (e) {}
+  try { const p = await Notification.requestPermission(); toast(p === 'granted' ? 'Sẽ báo khi tới lượt bạn' : 'Chưa bật được thông báo'); } catch (e) {}
   render();
 }
 

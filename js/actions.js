@@ -37,7 +37,7 @@ function setLevel(id, lv) {
 }
 function removePlayer(id) {
   const used = S.session.rounds.some(r => r.courts.some(c => [...c.a, ...c.b].includes(id)));
-  if (used) { closeSheet(); toast('Người này đã chơi trong buổi — hãy chuyển sang "vắng" thay vì xoá'); return; }
+  if (used) { closeSheet(); toast('Người này đã chơi trong buổi. Hãy chuyển sang "vắng" thay vì xoá'); return; }
   confirmSheet(`Xoá ${esc(P(id).name)}?`, 'Người chơi sẽ bị xoá khỏi danh sách.', 'Xoá', () => {
     S.players = S.players.filter(p => p.id !== id); save(); render(); toast('Đã xoá');
   });
@@ -149,7 +149,7 @@ function tapSlot(ref) {
 }
 function roundText(r) {
   const lines = [`${SP().emoji} Vòng ${r.no}`];
-  r.courts.forEach((c, i) => lines.push(`${cName(c, i)}: ${c.a.map(id => P(id).name).join(' & ')}  ${c.score ? c.score.join('–') : '⚔️'}  ${c.b.map(id => P(id).name).join(' & ')}`));
+  r.courts.forEach((c, i) => lines.push(`${cName(c, i)}: ${c.a.map(id => P(id).name).join(' & ')}  ${c.score ? c.score.join('–') : '⚔️'}  ${c.b.map(id => P(id).name).join(' & ')}`)); // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
   if (r.resting.length) lines.push(`Nghỉ: ${r.resting.map(id => P(id).name).join(', ')}`);
   return lines.join('\n');
 }
@@ -157,10 +157,10 @@ async function shareText(text) {
   closeSheet();
   try {
     if (navigator.share) { await navigator.share({ text }); return; }
-    await navigator.clipboard.writeText(text); toast('Đã copy — dán vào Zalo/Messenger');
+    await navigator.clipboard.writeText(text); toast('Đã copy. Dán vào Zalo/Messenger');
   } catch (e) {
     if (e && e.name === 'AbortError') return;
-    try { await navigator.clipboard.writeText(text); toast('Đã copy — dán vào Zalo/Messenger'); } catch (e2) { prompt('Copy nội dung:', text); }
+    try { await navigator.clipboard.writeText(text); toast('Đã copy. Dán vào Zalo/Messenger'); } catch (e2) { prompt('Copy nội dung:', text); }
   }
 }
 function shareRound(all) {

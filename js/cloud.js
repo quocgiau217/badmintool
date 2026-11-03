@@ -95,10 +95,10 @@ function pushNow() {
     const v = res.snapshot.val();
     if (v && typeof v.s === 'string') {
       remoteV = v.v || 0; lastRemote = v.s; storeV(); applyRemoteStr(v.s);
-      toast('⚠️ Người quản lý khác vừa cập nhật — đã tải bản mới nhất, hãy thao tác lại');
+      toast('Người quản lý khác vừa cập nhật. Đã tải bản mới nhất, hãy thao tác lại', 'warn');
     }
   }).catch(e => {
-    if (/permission/i.test(String(e && (e.code || e.message)))) { room.admin = false; rememberRoom(room); render(); toast('Mất quyền quản lý — hãy nhập lại mã quản lý'); }
+    if (/permission/i.test(String(e && (e.code || e.message)))) { room.admin = false; rememberRoom(room); render(); toast('Mất quyền quản lý. Hãy nhập lại mã quản lý'); }
     else toast('Chưa lưu được lên mạng: ' + cloudError(e));
   }).finally(() => {
     pushing = false; pendingS = null;
@@ -136,7 +136,7 @@ function subscribeRoom() {
       room = null; lastRemote = ''; S = loadState(); lobby = true; selSlot = null; focusId = null;
       closeSheet(); render();
       FB.get(dbRef('rooms/' + id)).then(r => {
-        if (r.exists()) { forgetKey(id); render(); openJoin(id, name); toast('🔒 Người quản lý vừa đổi mật khẩu phòng — hãy nhập mật khẩu mới'); }
+        if (r.exists()) { forgetKey(id); render(); openJoin(id, name); toast('Người quản lý vừa đổi mật khẩu phòng. Hãy nhập mật khẩu mới'); }
         else { dropRoomLocal(id); render(); toast('Phòng này đã bị người quản lý xoá'); }
       }).catch(() => toast('Không còn truy cập được phòng này'));
       return;
@@ -148,10 +148,10 @@ function subscribeRoom() {
     if (first && room.admin && JSON.stringify(syncPart()) !== v.s && seenV() === remoteV) {
       // máy chủ vẫn là bản mình đã thấy -> phần khác là do mình sửa khi mất mạng: đẩy lên
       lastRemote = v.s; pushAgain = false; schedulePush();
-      toast('☁️ Đang đưa các thay đổi lúc mất mạng lên phòng');
+      toast('Đang đưa các thay đổi lúc mất mạng lên phòng');
       return;
     }
-    if (first && pushAgain && seenV() >= 0 && seenV() !== remoteV && JSON.stringify(syncPart()) !== v.s) toast('⚠️ Phòng đã được cập nhật ở máy khác — đã tải bản mới nhất');
+    if (first && pushAgain && seenV() >= 0 && seenV() !== remoteV && JSON.stringify(syncPart()) !== v.s) toast('Phòng đã được cập nhật ở máy khác. Đã tải bản mới nhất', 'warn');
     pushAgain = false;
     lastRemote = v.s; storeV();
     applyRemoteStr(v.s);
@@ -185,7 +185,7 @@ function watchRooms() {
       renderRoomList();
     }, e => {
       unsubRooms = null;
-      lobbyErr = /permission/i.test(String(e && (e.code || e.message))) ? 'Chưa xem được danh sách phòng — người cài đặt cần cập nhật Rules mới trên Firebase' : cloudError(e);
+      lobbyErr = /permission/i.test(String(e && (e.code || e.message))) ? 'Chưa xem được danh sách phòng. Người cài đặt cần cập nhật Rules mới trên Firebase' : cloudError(e);
       renderRoomList();
     });
   }).catch(e => { lobbyErr = cloudError(e); renderRoomList(); });
@@ -224,14 +224,14 @@ function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) { su
 // mất mạng: vẫn mở được phòng đã vào trên máy này, dùng dữ liệu đã lưu; có mạng lại sẽ tự đồng bộ
 function openRoomOffline(r) {
   enterRoom({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, main: r.main !== false && !!r.admin, pw: r.pw || '', sport: r.sport });
-  toast('📴 Đang mất mạng — dùng dữ liệu đã lưu, có mạng sẽ tự đồng bộ');
+  toast('Đang mất mạng. Dùng dữ liệu đã lưu, có mạng sẽ tự đồng bộ');
 }
 const isNetErr = e => /network|offline|unavailable|fetch|timeout/i.test(String(e && (e.code || e.message)));
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 async function openRoomByKey(id, key, pw) {
   await cloudInit();
   const r = await FB.get(dbRef('rooms/' + id));
-  if (!r.exists()) { dropRoomLocal(id); if (lobby) render(); throw new Error('Không tìm thấy phòng "' + id + '" — có thể phòng đã bị xoá'); }
+  if (!r.exists()) { dropRoomLocal(id); if (lobby) render(); throw new Error('Không tìm thấy phòng "' + id + '". Có thể phòng đã bị xoá'); }
   const d = await FB.get(dbRef('data/' + key));
   if (!d.exists()) throw new Error('Sai mật khẩu');
   const role = await adminRole(key);
@@ -266,7 +266,7 @@ async function createRoom(name, idRaw, pw, code, copyLocal, sport) {
   await FB.set(dbRef('rooms/' + id), { name: name.trim().slice(0, 40), created: FB.serverTimestamp(), sport });
   try { localStorage.setItem('badminton_room_' + id, JSON.stringify(Object.assign(defaultState(), init, { tab: 'players' }))); } catch (e) {}
   enterRoom({ id, name: name.trim().slice(0, 40), key, admin: true, pw, sport });
-  toast('Đã tạo phòng 🎉 Bấm "Mời" để gửi cho cả nhóm');
+  toast('Đã tạo phòng Bấm "Mời" để gửi cho cả nhóm');
 }
 async function unlockAdmin(code) {
   if (!code) throw new Error('Nhập mã quản lý');
@@ -275,7 +275,7 @@ async function unlockAdmin(code) {
   try { await FB.set(dbRef('admins/' + room.key + '/' + myUid), ak); }
   catch (e) { throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Sai mã quản lý' : cloudError(e)); }
   room.admin = true; room.main = (await adminRole(room.key)) === 'main';
-  rememberRoom(room); closeSheet(); render(); toast(room.main ? '🔓 Đã mở quyền quản lý' : '🔓 Đã mở quyền quản lý phụ');
+  rememberRoom(room); closeSheet(); render(); toast(room.main ? 'Đã mở quyền quản lý' : 'Đã mở quyền quản lý phụ');
 }
 function leaveRoom() {
   if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins();
@@ -303,7 +303,7 @@ async function deleteRoom() {
     await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['checkin/' + key]: null, ['subKeys/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
   } catch (e) {
     subscribeRoom();
-    throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Không xoá được — cần quyền quản lý chính (phòng tạo từ bản cũ thì xoá trong Firebase Console)' : cloudError(e));
+    throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Không xoá được: cần quyền quản lý chính (phòng tạo từ bản cũ thì xoá trong Firebase Console)' : cloudError(e));
   }
   dropRoomLocal(id); room = null; lastRemote = '';
   S = loadState(); selSlot = null; focusId = null; lobby = true;
@@ -314,7 +314,7 @@ function dropRoomLocal(id) {
 }
 function inviteLink() { return `${location.origin}${location.pathname}#r=${encodeURIComponent(room.id)}&k=${room.key}`; }
 function shareInvite() {
-  const lines = [`${SP().emoji} Mời vào phòng ${SP().name.toLowerCase()} "${room.name}"`, `👉 Bấm để xem lịch đánh: ${inviteLink()}`];
+  const lines = [`${SP().emoji} Mời vào phòng ${SP().name.toLowerCase()} "${room.name}"`, `👉 Bấm để xem lịch đánh: ${inviteLink()}`]; // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
   lines.push('', `Hoặc mở ${location.origin}${location.pathname} → Phòng → Vào phòng`, `Mã phòng: ${room.id}` + (room.pw ? `\nMật khẩu: ${room.pw}` : ''));
   shareText(lines.join('\n'));
 }
@@ -324,14 +324,14 @@ async function runBusy(btn, fn) {
   if (btn.disabled) return;
   const card = btn.classList.contains('rtap'), label = btn.innerHTML; btn.disabled = true;
   if (card) btn.classList.add('busy'); else btn.innerHTML = '<i class="i i-hourglass"></i> Đang xử lý…';
-  try { await fn(); } catch (e) { toast('⚠️ ' + (e && e.message ? cloudError(e) : e)); }
+  try { await fn(); } catch (e) { toast((e && e.message ? cloudError(e) : e), 'warn'); }
   finally { if (document.body.contains(btn)) { btn.disabled = false; if (card) btn.classList.remove('busy'); else btn.innerHTML = label; } }
 }
-const statusText = () => ({ online: 'Đang kết nối trực tiếp', offline: 'Mất mạng — sẽ tự đồng bộ lại', connecting: 'Đang kết nối…' }[roomStatus]);
+const statusText = () => ({ online: 'Đang kết nối trực tiếp', offline: 'Mất mạng, sẽ tự đồng bộ lại', connecting: 'Đang kết nối…' }[roomStatus]);
 function openRoomSheet() {
   haptic();
   if (!CLOUD_ON) return openSheet(`<h3><i class="i i-cloud"></i> Phòng chơi chung</h3>
-    <p>Chế độ phòng online chưa được bật trên trang này. Người cài đặt trang cần tạo dự án Firebase (miễn phí) và dán cấu hình vào file <b>config.js</b> — xem hướng dẫn trong README.</p>
+    <p>Chế độ phòng online chưa được bật trên trang này. Người cài đặt trang cần tạo dự án Firebase (miễn phí) và dán cấu hình vào file <b>config.js</b>. Xem hướng dẫn trong README.</p>
     <button class="btn block" onclick="closeSheet()">Đóng</button>`);
   if (!room) return goLobby();
   openSheet(`
@@ -394,7 +394,7 @@ function renderRoomList() {
   const q = fold(lobbyQ.trim());
   const list = others.filter(r => (lobbySport === 'all' || r.sport === lobbySport) && (!q || fold(r.name).includes(q) || r.id.includes(q)));
   el.innerHTML = list.length ? `<div class="rgrid">${list.map(r => roomCard(r, false)).join('')}</div>`
-    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : lobbySport !== 'all' && others.length ? `Chưa có phòng ${sportOf(lobbySport).name} nào — bấm <b>Tạo phòng</b> để mở phòng đầu tiên` : !lobbyRooms.length ? '<i class="i i-badminton"></i><i class="i i-pickleball"></i> Chưa có phòng nào — bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
+    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : lobbySport !== 'all' && others.length ? `Chưa có phòng ${sportOf(lobbySport).name} nào. Bấm <b>Tạo phòng</b> để mở phòng đầu tiên` : !lobbyRooms.length ? '<i class="i i-badminton"></i><i class="i i-pickleball"></i> Chưa có phòng nào. Bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
   renderLobbyStats();
 }
 function renderLobbyStats() {
@@ -424,7 +424,7 @@ function openCreate() {
     ${has ? `<label class="check"><input type="checkbox" id="rCopy" checked> Dùng danh sách ${S.players.length} người chơi đang có trên máy</label>` : ''}
     <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
       <button class="btn primary" onclick="runBusy(this,()=>createRoom(v('rName'),v('rId'),v('rPw'),v('rAdm'),!!(document.getElementById('rCopy')||{}).checked,newSport))">Tạo phòng</button></div>
-    <p class="small" style="margin:12px 0 0"><i class="i i-alert"></i> Hãy ghi nhớ mật khẩu và mã quản lý — không thể khôi phục nếu quên.</p>`);
+    <p class="small" style="margin:12px 0 0"><i class="i i-alert"></i> Hãy ghi nhớ mật khẩu và mã quản lý. Không thể khôi phục nếu quên.</p>`);
 }
 const v = id => (document.getElementById(id) || { value: '' }).value.trim();
 function openJoin(prefill, name) {
@@ -443,7 +443,7 @@ function openUnlock() {
     <div class="row2"><button class="btn" onclick="openRoomSheet()">Quay lại</button>
       <button class="btn primary" onclick="runBusy(this,()=>unlockAdmin(v('uCode')))">Mở khoá</button></div>`);
 }
-function lockedToast() { toast('🔒 Chỉ xem — nhập mã quản lý để sửa'); }
+function lockedToast() { toast('Chỉ xem. Nhập mã quản lý để sửa'); }
 
 
 /* ---------- khởi động: link mời / phòng đang dùng ---------- */
@@ -454,6 +454,6 @@ function bootCloud() {
   if (h.get('r') && h.get('k')) { // mở bằng link mời
     const id = normId(h.get('r')), key = h.get('k');
     history.replaceState(null, '', location.pathname + location.search);
-    openRoomByKey(id, key).then(() => toast('Đã vào phòng ' + room.name)).catch(e => toast('⚠️ ' + cloudError(e)));
+    openRoomByKey(id, key).then(() => toast('Đã vào phòng ' + room.name)).catch(e => toast(cloudError(e), 'warn'));
   } else if (q.get('room')) openJoin(normId(q.get('room')));
 }

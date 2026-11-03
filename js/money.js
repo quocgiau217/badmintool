@@ -41,7 +41,7 @@ function moneyBill() {
 function saveCost(id, label, amountStr) {
   const amount = parseMoney(amountStr);
   if (!label.trim()) { toast('Nhập tên khoản chi'); return; }
-  if (!(amount > 0)) { toast('Số tiền chưa đúng — vd: 200k, 1.2tr, 150000'); return; }
+  if (!(amount > 0)) { toast('Số tiền chưa đúng, vd: 200k, 1.2tr, 150000'); return; }
   const it = { id: id || uid(), label: label.trim().slice(0, 40), amount: Math.min(amount, 1e9) }, m = money();
   const i = m.items.findIndex(x => x.id === id);
   i >= 0 ? (m.items[i] = it) : m.items.push(it);
@@ -100,11 +100,11 @@ function openPay(pid) {
 }
 function moneyText() {
   const bill = moneyBill(), b = S.settings.bank;
-  const lines = [`💰 Chi phí ${SP().name.toLowerCase()} ngày ${dateTag()}${room ? ' — ' + room.name : ''}`];
+  const lines = [`💰 Chi phí ${SP().name.toLowerCase()} ngày ${dateTag()}${room ? ' — ' + room.name : ''}`]; // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
   money().items.forEach(x => lines.push(`• ${x.label}: ${vnd(x.amount)}`));
   lines.push(`Tổng: ${vnd(bill.total)} · ${bill.rows.length} người${bill.byMatches ? ' (chia theo số trận)' : ''}`, '');
-  bill.rows.forEach((r, i) => lines.push(`${i + 1}. ${r.p.name}: ${vnd(r.amount)}${bill.byMatches ? ` (${r.games} trận)` : ''}${r.paid ? ' ✅' : ''}`));
-  if (b && b.acc) lines.push('', `🏦 ${bankName(b.bin)} · ${b.acc}${b.name ? ' · ' + b.name : ''}`);
+  bill.rows.forEach((r, i) => lines.push(`${i + 1}. ${r.p.name}: ${vnd(r.amount)}${bill.byMatches ? ` (${r.games} trận)` : ''}${r.paid ? ' ✅' : ''}`)); // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
+  if (b && b.acc) lines.push('', `🏦 ${bankName(b.bin)} · ${b.acc}${b.name ? ' · ' + b.name : ''}`); // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
   return lines.join('\n');
 }
 
@@ -123,14 +123,16 @@ function viewMoney() {
     </div>`).join('');
   return `
     <div class="money-hero card">
-      <div><span class="small muted">Tổng chi</span><b>${vnd(bill.total)}</b></div>
-      <div><span class="small muted">Đã thu</span><b>${vnd(bill.got)}</b><span class="small muted">${bill.rows.length ? `${bill.rows.length - left}/${bill.rows.length} người` : ''}</span></div>
-      ${bill.rows.length ? `<div class="bar-track"><div class="bar-fill" style="width:${bill.due ? Math.round(bill.got / bill.due * 100) : 0}%"></div></div>` : ''}
+      ${!bill.total ? `<div><span class="small muted">Chưa có khoản chi</span><b>0đ</b><span class="small muted">Thêm tiền sân, tiền ${SP().key === 'pickleball' ? 'bóng' : 'cầu'} để chia cho mọi người</span></div>`
+        : left ? `<div><span class="small muted">Còn phải thu</span><b class="big">${vnd(bill.due - bill.got)}</b><span class="small muted">${left} người chưa trả · đã thu ${vnd(bill.got)} / ${vnd(bill.due)}</span></div>`
+        : `<div><span class="small muted">Đã thu đủ</span><b class="big">${vnd(bill.got)}</b><span class="small muted">Cả ${bill.rows.length} người đã trả</span></div>`}
+      ${bill.rows.length && bill.total ? `<div class="bar-track" role="img" aria-label="Đã thu ${bill.rows.length - left} trên ${bill.rows.length} người"><div class="bar-fill" style="width:${bill.due ? Math.round(bill.got / bill.due * 100) : 0}%"></div></div>` : ''}
+      ${bill.total ? `<div class="small muted mh-total">Tổng chi ${vnd(bill.total)}${bill.due > bill.total ? ` · làm tròn dư ${vnd(bill.due - bill.total)}` : ''}</div>` : ''}
     </div>
     <div class="sec-title"><h2>Khoản chi</h2>${ed ? `<button class="link" onclick="openCost()"><i class="i i-plus"></i> Thêm</button>` : ''}</div>
     <div class="card mlist">${items}</div>
     ${bill.total ? `
-    <div class="sec-title"><h2>Mỗi người trả</h2>${bill.due > bill.total ? `<span class="small muted">làm tròn, dư ${vnd(bill.due - bill.total)}</span>` : ''}</div>
+    <div class="sec-title"><h2>Mỗi người trả</h2></div>
     ${ed ? `<div class="seg sm" style="margin-bottom:10px"><button class="${m.mode !== 'matches' ? 'on' : ''}" onclick="setMoneyMode('equal')">Chia đều</button>
       <button class="${m.mode === 'matches' ? 'on' : ''}" onclick="setMoneyMode('matches')">Theo số trận đã đánh</button></div>` : ''}
     ${bill.rows.length ? `<div class="plist">${rows}</div>` : `<div class="card small muted">Chưa có ai có mặt hoặc đã chơi.</div>`}

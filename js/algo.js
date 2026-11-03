@@ -101,7 +101,7 @@ function finishCourt(ci) {
   if (pick.length < need) { // không đủ người cho sân này nữa
     r.courts.splice(ci, 1); r.resting = [...queue, ...out];
     if (!r.courts.length) r.done = true;
-    toast(`Không đủ người — đã đóng ${cName(c, ci)}`);
+    toast(`Không đủ người. Đã đóng ${cName(c, ci)}`);
   } else {
     const [nc] = bestArrangement(pick, st, S.settings.mode === 'balanced');
     nc.name = c.name; nc.start = nowSrv();
@@ -155,7 +155,7 @@ function removeCourt(ci) {
   const names = (S.settings.courtNames || []).slice(); names.splice(ci, 1); S.settings.courtNames = names;
   S.settings.courts = r.courts.length;
   syncCourtNames(); selSlot = null; closeSheet(); save(); render();
-  toast(`Đã bỏ ${cName(c, ci)} — còn ${r.courts.length} sân`);
+  toast(`Đã bỏ ${cName(c, ci)}. Còn ${r.courts.length} sân`);
 }
 // mở thêm 1 sân ngay trong vòng: lấy người nghỉ ưu tiên (ít trận nhất)
 function addCourt() {

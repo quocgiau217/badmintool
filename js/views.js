@@ -38,7 +38,7 @@ function renderHero() {
   if (lobby) {
     document.getElementById('hero').innerHTML = `
       <div class="hero-top"><div class="logo img"><img src="icons/favicon.svg" alt=""></div>
-        <div class="ht"><h1>Xếp Sân</h1><div class="rsub">Cầu lông · Pickleball — chọn phòng hoặc tạo phòng mới</div></div></div>
+        <div class="ht"><h1>Xếp Sân</h1><div class="rsub">Cầu lông & Pickleball · chọn phòng hoặc tạo phòng mới</div></div></div>
       <div class="pills" id="lobbyStats"></div>`;
     renderLobbyStats();
     return;
@@ -126,7 +126,7 @@ function viewPlayInner() {
       <p>Hiện có ${act} người có mặt. Thêm người chơi hoặc bật "có mặt".</p>
       <button class="btn primary" onclick="goTab('players')">Đến danh sách người chơi</button></div>`;
   if (!r && !canEdit()) return `<div class="card empty"><div class="big"><i class="i i-hourglass"></i></div><h3>Chờ người quản lý xếp sân</h3>
-      <p>Trang sẽ tự cập nhật ngay khi có vòng mới — không cần tải lại.</p></div>`;
+      <p>Trang sẽ tự cập nhật ngay khi có vòng mới. Không cần tải lại.</p></div>`;
   if (!r) return `<div class="sec-title"><h2>Cài đặt</h2></div><div class="card">${settingsHtml()}</div>
     <div class="card empty" style="margin-top:12px"><div class="big"><i class="i i-dice"></i></div>
       <h3>${S.session.rounds.length ? `Đã chơi ${S.session.rounds.length} vòng` : 'Sẵn sàng xếp sân'}</h3>
@@ -155,13 +155,13 @@ function viewPlayInner() {
       <div class="hd"><i class="i i-coffee"></i> Nghỉ vòng này <span class="tag">${r.resting.length}</span></div>
       <div class="rest-wrap">${r.resting.map((id, i) => chip(id, { rest: i })).join('')}</div></div>`;
   return `
-    <div class="round-h"><div class="t"><b>${q ? 'Đang đánh' : `Vòng ${r.no}`}</b><span>${selSlot ? '<i class="i i-info"></i> Chọn người thứ 2 để đổi chỗ' : `${r.courts.length} sân · ${S.settings.format === 'singles' ? 'đánh đơn · ' : ''}${q ? `xếp hàng · ${r.resting.length} người chờ` : bal ? 'cân trình' : 'ngẫu nhiên'}`}</span></div>
+    <div class="round-h"><div class="t"><h2>${q ? 'Đang đánh' : `Vòng ${r.no}`}</h2><span>${selSlot ? '<i class="i i-info"></i> Chọn người thứ 2 để đổi chỗ' : `${r.courts.length} sân · ${S.settings.format === 'singles' ? 'đánh đơn · ' : ''}${q ? `${r.resting.length} người chờ${r.resting.length ? ', kế tiếp: ' + r.resting.slice(0, perCourt()).map(id => esc(P(id).name)).join(', ') : ''}` : r.resting.length ? `nghỉ: ${r.resting.map(id => esc(P(id).name)).join(', ')}` : 'không ai nghỉ'}`}</span></div>
       ${canEdit() ? `<button class="icon-btn" onclick="openSettings()" aria-label="Cài đặt">${ICON.gear}</button>` : ''}
       <button class="icon-btn" onclick="openShare()" aria-label="Gửi nhóm">${ICON.share}</button></div>
     ${courts}
     ${canEdit() && r.resting.length >= perCourt() && r.courts.length < MAX_COURTS ? `<button class="add-court" onclick="addCourt()"><i class="i i-plus"></i> Có thêm sân trống? Mở thêm 1 sân<span>Lấy ${perCourt()} người ${q ? 'đầu hàng chờ' : 'đang nghỉ'} vào đánh ngay</span></button>` : ''}
     ${rest}
-    <div class="tip"><i class="i i-info"></i> <span>${canEdit() ? (q ? 'Sân nào đánh xong thì bấm "Xong" ở sân đó. Chạm 2 người để đổi chỗ (kể cả trong hàng chờ).' : 'Chạm 2 người bất kỳ để đổi chỗ (kể cả người đang nghỉ). Bấm <i class="i i-trophy"></i> để ghi đội thắng — tuỳ chọn.')
+    <div class="tip"><i class="i i-info"></i> <span>${canEdit() ? (q ? 'Sân nào đánh xong thì bấm "Xong" ở sân đó. Chạm 2 người để đổi chỗ (kể cả trong hàng chờ).' : 'Chạm 2 người bất kỳ để đổi chỗ (kể cả người đang nghỉ). Bấm <i class="i i-trophy"></i> để ghi đội thắng. Tuỳ chọn.')
       : 'Chạm vào tên để tô sáng người đó và xem lịch đánh / nghỉ. Trang tự cập nhật khi người quản lý thay đổi.'}</span></div>
     ${upcomingHtml(r)}`;
 }

@@ -56,7 +56,7 @@ async function changePassword(code, pw) {
   room.key = newKey; room.pw = pw; rememberRoom(room);
   try { localStorage.removeItem('badminton_room_v_' + id); } catch (e) {}
   lastRemote = ''; subscribeRoom(); subscribeCheckins();
-  closeSheet(); render(); toast('🔒 Đã đổi mật khẩu — bấm "Mời" để gửi link mới cho cả nhóm');
+  closeSheet(); render(); toast('Đã đổi mật khẩu. Bấm "Mời" để gửi link mới cho cả nhóm');
 }
 
 /* ---------- đổi mã quản lý chính ---------- */
@@ -76,7 +76,7 @@ async function changeAdminCode(oldCode, newCode) {
   const nak = await adminKeyOf(room.id, newCode);
   // 1 lần ghi: đổi mã và chỉ giữ lại máy này trong danh sách quản lý
   await FB.update(FB.ref(fbDb), { ['adminKeys/' + room.key]: nak, ['admins/' + room.key]: { [myUid]: nak } });
-  closeSheet(); render(); toast('🔑 Đã đổi mã quản lý — các máy quản lý khác cần nhập lại mã');
+  closeSheet(); render(); toast('Đã đổi mã quản lý. Các máy quản lý khác cần nhập lại mã');
 }
 
 /* ---------- mã quản lý phụ ---------- */
@@ -92,7 +92,7 @@ async function openHelpers() {
       .sort((a, b) => b.t - a.t);
   } catch (e) { return openSheet(`<h3><i class="i i-users"></i> Mã quản lý phụ</h3><p><i class="i i-alert"></i> ${esc(cloudError(e))}</p><button class="btn block" onclick="openRoomSheet()">Quay lại</button>`); }
   const list = helpersCache;
-  openSheet(`<h3><i class="i i-users"></i> Mã quản lý phụ</h3><p>Người giữ mã phụ được xếp sân, sửa danh sách, ghi kết quả — nhưng không đổi được mật khẩu, mã quản lý hay xoá phòng.</p>
+  openSheet(`<h3><i class="i i-users"></i> Mã quản lý phụ</h3><p>Người giữ mã phụ được xếp sân, sửa danh sách, ghi kết quả, nhưng không đổi được mật khẩu, mã quản lý hay xoá phòng.</p>
     ${list.length ? `<div class="plist" style="box-shadow:none;border:1px solid var(--line);margin-bottom:14px">${list.map(x => `<div class="prow">
       <div style="flex:1;min-width:0"><div class="nm">${esc(x.n)}</div><div class="meta">${x.devices} máy đang dùng · tạo ${fmtDate(x.t)}</div></div>
       <button class="btn sm danger" onclick="runBusy(this,()=>revokeHelper('${x.h}'))">Thu hồi</button></div>`).join('')}</div>` : ''}
@@ -109,7 +109,7 @@ async function addHelper(name, code) {
   const mine = await FB.get(dbRef('admins/' + room.key + '/' + myUid));
   if (mine.val() === h) throw new Error('Mã phụ phải khác mã quản lý chính');
   await FB.set(dbRef(`subKeys/${room.key}/${h}`), { n: name.slice(0, 30), t: Date.now() });
-  await shareText([`🔑 Mã quản lý phụ phòng "${room.name}" cho ${name}:`, code, '', `Vào phòng → nút Phòng → "Nhập mã quản lý để sửa" → nhập mã trên.`].join('\n'));
+  await shareText([`🔑 Mã quản lý phụ phòng "${room.name}" cho ${name}:`, code, '', `Vào phòng → nút Phòng → "Nhập mã quản lý để sửa" → nhập mã trên.`].join('\n')); // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
   await openHelpers();
 }
 async function revokeHelper(h) {

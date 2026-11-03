@@ -41,7 +41,7 @@ function setAutoLevel(on) {
   S.settings.autoLevel = !!on;
   if (on) S.players.forEach(p => { if (p.r0 == null) p.r0 = baseRating(p.level); });
   save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings();
-  toast(on ? '📈 Trình độ sẽ tự cập nhật theo kết quả' : 'Đã tắt trình độ tự động');
+  toast(on ? 'Trình độ sẽ tự cập nhật theo kết quả' : 'Đã tắt trình độ tự động');
 }
 const fmtRating = r => Math.round(r).toLocaleString('vi-VN');
 

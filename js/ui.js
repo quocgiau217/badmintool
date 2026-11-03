@@ -23,9 +23,9 @@ const ICON = {
 
 /* ================== MÔN CHƠI ================== */
 const SPORTS = {
-  badminton: { key: 'badminton', name: 'Cầu lông', emoji: '🏸', quick: [21, 15, 11], desc: 'Đánh tới 21',
+  badminton: { key: 'badminton', name: 'Cầu lông', emoji: '🏸', quick: [21, 15, 11], desc: 'Đánh tới 21', // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(38 12 12)"><path d="M7.2 2.6 L16.8 2.6 L14.2 14 L9.8 14 Z" fill="currentColor" fill-opacity=".18"/><path d="M12 2.6 V14 M9.4 7.6 H14.6"/><path d="M9.8 14 H14.2 V15.6 A2.2 2.2 0 0 1 9.8 15.6 Z" fill="currentColor"/></g></svg>' },
-  pickleball: { key: 'pickleball', name: 'Pickleball', emoji: '🏓', quick: [11, 15, 21], desc: 'Đánh tới 11',
+  pickleball: { key: 'pickleball', name: 'Pickleball', emoji: '🏓', quick: [11, 15, 21], desc: 'Đánh tới 11', // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-32 9.5 11)"><rect x="3.8" y="1.6" width="11.4" height="12.6" rx="3.6" fill="currentColor" fill-opacity=".18"/><rect x="7.9" y="14.2" width="3.2" height="6.6" rx="1.2" fill="currentColor"/></g><circle cx="18.6" cy="18.2" r="3.3" fill="currentColor" fill-opacity=".18"/><circle cx="17.6" cy="17.3" r=".5" fill="currentColor" stroke="none"/><circle cx="19.7" cy="17.6" r=".5" fill="currentColor" stroke="none"/><circle cx="18.5" cy="19.4" r=".5" fill="currentColor" stroke="none"/></svg>' }
 };
 const sportOf = k => SPORTS[k] || SPORTS.badminton;
@@ -45,12 +45,12 @@ function setSport(k) {
 }
 
 let toastT;
-// thông báo nhanh: chữ thuần (lọc emoji), cảnh báo có màu riêng
+// thông báo nhanh: chữ thuần; toast(msg, 'warn') cho cảnh báo (màu riêng). Emoji lọt vào (từ dữ liệu) bị lọc bỏ.
 const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{23F1}\u{23F3}]\u{FE0F}?/gu;
-function toast(msg) {
+function toast(msg, kind) {
   const t = document.getElementById('toast'), raw = String(msg);
   t.textContent = raw.replace(EMOJI_RE, '').replace(/\s{2,}/g, ' ').trim();
-  t.classList.toggle('warn', /^\s*⚠/.test(raw));
+  t.classList.toggle('warn', kind === 'warn');
   t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
 }
 

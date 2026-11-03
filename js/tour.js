@@ -106,7 +106,7 @@ function tourSwap(i, j) {
 function startTour() {
   const d = tourDraft; if (!d || d.teams.length < 3) { toast('Cần ít nhất 3 đội'); return; }
   S.session.tour = { fmt: d.fmt, teams: d.teams.map(t => ({ id: t.id, p: t.p.slice() })), res: {}, created: Date.now() };
-  tourDraft = null; playView = 'tour'; closeSheet(); save(); render(); toast('🏆 Bắt đầu giải ' + TOUR_NAMES[d.fmt].toLowerCase());
+  tourDraft = null; playView = 'tour'; closeSheet(); save(); render(); toast('Bắt đầu giải ' + TOUR_NAMES[d.fmt].toLowerCase());
 }
 function endTour() {
   confirmSheet('Huỷ giải đấu?', 'Lịch và kết quả của giải sẽ bị xoá (các trận đã ghi không còn tính vào thống kê).', 'Huỷ giải', () => {
@@ -137,7 +137,7 @@ function tourCourts() {
 }
 function tourText() {
   const t = tour(); if (!t) return '';
-  const lines = [`🏆 Giải ${TOUR_NAMES[t.fmt].toLowerCase()} — ${SP().name}${room ? ' · ' + room.name : ''}`];
+  const lines = [`🏆 Giải ${TOUR_NAMES[t.fmt].toLowerCase()} — ${SP().name}${room ? ' · ' + room.name : ''}`]; // taste-skill-ignore: emoji only in text shared to Zalo/Messenger, not in the UI
   if (t.fmt === 'rr') {
     rrTable(t).forEach((r, i) => lines.push(`${i + 1}. ${teamName(r.id)}: ${r.w} thắng / ${r.pl} trận${r.df ? ` (HS ${r.df > 0 ? '+' : ''}${r.df})` : ''}`));
   } else {
@@ -158,7 +158,7 @@ function tourMatchRow(t, m, label) {
 }
 function viewTour() {
   const t = tour();
-  const head = `<div class="round-h"><div class="t"><b><i class="i i-trophy"></i> Giải đấu</b><span>${TOUR_NAMES[t.fmt]} · ${t.teams.length} đội</span></div>
+  const head = `<div class="round-h"><div class="t"><h2><i class="i i-trophy"></i> Giải đấu</h2><span>${TOUR_NAMES[t.fmt]} · ${t.teams.length} đội</span></div>
     <button class="icon-btn" onclick="shareText(tourText())" aria-label="Gửi nhóm">${ICON.share}</button></div>`;
   let body = '';
   if (t.fmt === 'rr') {

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6b4c"/><stop offset="1" stop-color="#19b07e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".3" cy=".25" r=".7">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#032b1e" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512"  fill="url(#bg)"/>
+  <rect width="512" height="512"  fill="url(#glow)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity=".16" stroke-width="8">
+    <rect x="88" y="56" width="336" height="400" rx="6"/>
+    <path d="M88 256 H424 M256 56 V196 M256 316 V456 M88 196 H424 M88 316 H424"/>
+  </g>
+  <g transform="translate(256 262) rotate(38) scale(0.95) translate(-256 -262)" filter="url(#sh)">
+    <path d="M160 150 Q179.2 128 198.4 150 Q217.6 128 236.8 150 Q256.0 128 275.2 150 Q294.4 128 313.6 150 Q332.8 128 352.0 150 L292 322 L220 322 Z" fill="#ffffff"/>
+    <g stroke="#0e7a57" stroke-opacity=".28" stroke-width="5" stroke-linecap="round" fill="none"><path d="M228.6 318 L184.0 150" /><path d="M242.3 318 L220.0 150" /><path d="M256.0 318 L256.0 150" /><path d="M269.7 318 L292.0 150" /><path d="M283.4 318 L328.0 150" /></g>
+    <path d="M187 236 L325 236" stroke="#0e7a57" stroke-opacity=".35" stroke-width="7" stroke-linecap="round"/>
+    <rect x="212" y="316" width="88" height="26" rx="9" fill="#ffffff"/>
+    <rect x="212" y="316" width="88" height="26" rx="9" fill="#0e7a57" fill-opacity=".12"/>
+    <path d="M220 340 L292 340 L292 352 A36 36 0 0 1 220 352 Z" fill="#f5b82e"/>
+    <path d="M232 352 A24 24 0 0 0 250 376" stroke="#ffffff" stroke-opacity=".55" stroke-width="7" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

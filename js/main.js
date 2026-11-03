@@ -10,6 +10,13 @@
   window[n] = function () { if (!canEdit()) { lockedToast(); return; } return f.apply(this, arguments); };
 });
 
+// Cho phép hoàn tác các thao tác khó quay lại (bọc sau lớp chặn quyền: người xem bị chặn thì không có gì để hoàn tác)
+[['finishRound', 'Xong vòng'], ['finishCourt', 'Xong sân'], ['generateRound', 'Xếp lại'], ['removeCourt', 'Bỏ sân'], ['addCourt', 'Mở thêm sân'],
+ ['setFormat', 'Đổi hình thức'], ['startTour', 'Tạo giải']].forEach(([n, label]) => {
+  const f = window[n]; if (typeof f !== 'function') return;
+  window[n] = function () { return undoable(label, f, [...arguments]); };
+});
+
 render();
 bootCloud();
 

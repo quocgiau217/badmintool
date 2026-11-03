@@ -60,8 +60,10 @@ function finishRound() {
 }
 function newSession() {
   confirmSheet('Bắt đầu buổi mới?', 'Tổng kết buổi này được lưu vào thống kê "Tất cả". Lịch đấu, kết quả chi tiết và khoản chi của buổi sẽ được xoá. Danh sách người chơi vẫn giữ.', 'Bắt đầu buổi mới', () => {
-    closeSession();
-    S.session = { rounds: [], credit: {}, started: Date.now() }; selSlot = null; save(); render(); toast('Đã tạo buổi mới');
+    undoable('Bắt đầu buổi mới', () => {
+      closeSession();
+      S.session = { rounds: [], credit: {}, started: Date.now() }; selSlot = null; save(); render();
+    });
   });
 }
 function setWinner(ci, t) {

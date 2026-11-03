@@ -482,3 +482,16 @@ nav button{font-size:10.5px}
 
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid2 .btn{min-height:46px;font-size:14px}
+
+/* ---------- hoàn tác ---------- */
+.undo{position:fixed;left:16px;right:16px;bottom:calc(150px + env(safe-area-inset-bottom));z-index:8;max-width:608px;margin:0 auto;
+  display:flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);border-radius:16px;padding:6px 6px 6px 16px;
+  box-shadow:var(--shadow-lg);font-size:14px;font-weight:600;overflow:hidden;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s}
+body:not(.has-bar) .undo{bottom:calc(90px + env(safe-area-inset-bottom))}
+.undo.show{opacity:1;transform:none}
+.undo>span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.undo-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;background:var(--brand-soft);color:var(--brand);font-weight:700}
+.undo-time{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);transform-origin:left}
+.undo.show .undo-time{animation:undoTime 10s linear forwards}
+@keyframes undoTime{to{transform:scaleX(0)}}
+@media (prefers-reduced-motion: reduce){.undo{transition:opacity .2s;transform:none}.undo.show .undo-time{animation:none}}

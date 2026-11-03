@@ -110,7 +110,7 @@ function startTour() {
 }
 function endTour() {
   confirmSheet('Huỷ giải đấu?', 'Lịch và kết quả của giải sẽ bị xoá (các trận đã ghi không còn tính vào thống kê).', 'Huỷ giải', () => {
-    delete S.session.tour; playView = null; save(); render(); toast('Đã huỷ giải');
+    undoable('Huỷ giải', () => { delete S.session.tour; playView = null; save(); render(); });
   });
 }
 function editTourMatch(id) {

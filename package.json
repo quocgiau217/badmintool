@@ -1,0 +1,8 @@
+{
+  "name": "xep-san",
+  "private": true,
+  "description": "Xếp sân cầu lông & pickleball — web app tĩnh, không cần build.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

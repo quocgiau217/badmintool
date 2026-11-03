@@ -1,12 +1,29 @@
 {
-  "database": { "rules": "database.rules.json" },
+  "database": {
+    "rules": "database.rules.json"
+  },
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "database.rules.json", "README.md", "**/.*"]
+    "ignore": [
+      "firebase.json",
+      "database.rules.json",
+      "README.md",
+      "DESIGN.md",
+      "PRODUCT.md",
+      "package.json",
+      "tests/**",
+      "**/.*"
+    ]
   },
   "emulators": {
-    "auth": { "port": 9099 },
-    "database": { "port": 9000 },
-    "ui": { "enabled": false }
+    "auth": {
+      "port": 9099
+    },
+    "database": {
+      "port": 9000
+    },
+    "ui": {
+      "enabled": false
+    }
   }
 }

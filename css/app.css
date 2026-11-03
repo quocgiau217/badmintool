@@ -501,3 +501,14 @@ body:not(.has-bar) .undo{bottom:calc(90px + env(safe-area-inset-bottom))}
 .reqs-h{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:6px}
 .req{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
 .req .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- lịch giải ---------- */
+.tplan{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.tplan>.i{font-size:20px;color:var(--brand)}
+.tplan>div{flex:1;min-width:0;display:flex;flex-direction:column}
+.tplan b{font-size:17px;font-variant-numeric:tabular-nums}
+.tslot{flex:none;width:58px;display:flex;flex-direction:column;font-size:11.5px;color:var(--muted);line-height:1.25}
+.tslot b{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}
+.podium{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:13px;font-weight:600}
+.podium span{display:inline-flex;align-items:center;gap:6px}
+.podium .medal{width:20px;height:20px;font-size:11px}

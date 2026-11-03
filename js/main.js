@@ -5,9 +5,13 @@
 ['addPlayers', 'quickAdd', 'togglePlayer', 'setLevel', 'removePlayer', 'editPlayer', 'renamePlayer', 'generateRound', 'finishRound',
  'newSession', 'setWinner', 'tapSlot', 'editMatch', 'replan', 'openSettings', 'setCourts', 'setMode', 'setPreview', 'setAllActive',
  'setCourtName', 'openCourt', 'removeCourt', 'addCourt',
- 'finishCourt', 'setFlow', 'setFormat', 'approveReq', 'rejectReq', 'openTourCreate', 'openRename', 'openChangePw', 'openChangeCode', 'openHelpers', 'tourShuffle', 'tourSwap', 'startTour', 'endTour', 'editTourMatch', 'saveCost', 'removeCost', 'setMoneyMode', 'togglePaid', 'toggleExclude', 'openCost', 'openBank', 'saveBank'].forEach(n => {
+ 'finishCourt', 'setFlow', 'setFormat', 'approveReq', 'rejectReq', 'openTourCreate', 'openRename', 'openChangePw', 'openChangeCode', 'openHelpers', 'tourShuffle', 'tourSwap', 'startTour', 'endTour', 'editTourMatch', 'openTourPlan', 'tourSet', 'tourSetStart', 'saveCost', 'removeCost', 'setMoneyMode', 'togglePaid', 'toggleExclude', 'openCost', 'openBank', 'saveBank'].forEach(n => {
   const f = window[n]; if (typeof f !== 'function') return;
-  window[n] = function () { if (!canEdit()) { lockedToast(); return; } return f.apply(this, arguments); };
+  window[n] = function () {
+    if (!canEdit()) { lockedToast(); return; }
+    if (!undoDepth && undoSnap) { undoSnap = null; hideUndo(); } // thao tác sửa mới -> không hoàn tác bước cũ nữa (tránh mất thay đổi vừa làm)
+    return f.apply(this, arguments);
+  };
 });
 
 // Cho phép hoàn tác các thao tác khó quay lại (bọc sau lớp chặn quyền: người xem bị chặn thì không có gì để hoàn tác)

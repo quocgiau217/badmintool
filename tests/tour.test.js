@@ -79,3 +79,38 @@ test('dữ liệu giải lạ bị lọc', () => {
   assert.strictEqual(s.session.tour.teams[0].p.join(), 'a');
   assert.strictEqual(Object.keys(s.session.tour.res).join(), 'r0m0');
 });
+
+test('lịch theo giờ: không đội nào đánh 2 trận cùng lúc, mỗi khung không quá số sân', () => {
+  const app = loadApp();
+  for (const [n, courts] of [[4, 1], [5, 2], [6, 2], [7, 3], [8, 2]]) {
+    const t = mkTour(app, n, 'rr'); t.courts = courts;
+    const { at, slots } = app.tourSchedule(t), ms = app.tourMatches(t);
+    assert.strictEqual(Object.keys(at).length, ms.length, `n=${n}: trận nào cũng có giờ`);
+    for (let s = 0; s < slots; s++) {
+      const inSlot = ms.filter(m => at[m.id].slot === s);
+      assert.ok(inSlot.length <= courts);
+      const teams = inSlot.flatMap(m => [m.a, m.b]);
+      assert.strictEqual(new Set(teams).size, teams.length, `n=${n} khung ${s}: trùng đội`);
+      assert.strictEqual(new Set(inSlot.map(m => at[m.id].court)).size, inSlot.length, 'trùng sân');
+    }
+    // đủ sân thì không phí khung: số khung tối thiểu theo lý thuyết
+    assert.ok(slots >= Math.ceil(ms.length / courts));
+  }
+});
+
+test('loại trực tiếp: trận sau chỉ xếp sau khi các trận trước đã xong; có tranh hạng 3', () => {
+  const app = loadApp();
+  const t = mkTour(app, 6, 'ko', [5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 1, 1]); t.courts = 2; t.third = true;
+  const { at } = app.tourSchedule(t), ms = app.tourMatches(t);
+  ms.forEach(m => m.deps.forEach(d => assert.ok(at[d].slot < at[m.id].slot, `${m.id} phải sau ${d}`)));
+  const th = ms.find(m => m.third), fin = ms[ms.length - 1];
+  assert.ok(th, 'có trận tranh hạng 3');
+  assert.strictEqual(fin.id.startsWith('r'), true, 'chung kết là trận cuối');
+  // đánh hết bán kết: đội thua vào tranh hạng 3
+  const rs = app.koRounds(t);
+  for (let r = 0; r < rs.length - 1; r++) app.koRounds(t)[r].filter(m => m.a && m.b && !m.bye).forEach(m => win(t, m, 'a'));
+  const semis = app.koRounds(t)[rs.length - 2], third = app.koThird(t);
+  assert.strictEqual(JSON.stringify([third.a, third.b].sort()), JSON.stringify(semis.map(m => m.b).sort()));
+  win(t, third, 'b');
+  assert.strictEqual(app.tourCourts().filter(c => c.winner).length, ms.length - 1, 'mọi trận trừ chung kết đã có kết quả, gồm cả hạng 3');
+});

@@ -11,7 +11,8 @@ Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lôn
 - **2 cách luân phiên**: **Theo vòng** (các sân đổi người cùng lúc, có lịch dự kiến 2–8 vòng) hoặc **Xếp hàng** (sân nào xong thì 4 người đầu hàng vào ngay, người vừa đánh xuống cuối hàng).
 - **Sân linh hoạt**: 1–10 sân, đặt tên theo nhà thi đấu, mở thêm / bỏ sân ngay giữa vòng; **đồng hồ** đếm thời gian từng sân.
 - **Đổi chỗ thủ công**, **ghi tỉ số**, sửa kết quả cả các vòng đã xong.
-- **Giải đấu nhỏ**: vòng tròn (bảng xếp hạng) hoặc loại trực tiếp (nhánh đấu, hạt giống, miễn đấu, vô địch); tự chia đội cân trình.
+- **Giải đấu nhỏ**: vòng tròn (bảng xếp hạng) hoặc loại trực tiếp (nhánh đấu, hạt giống, miễn đấu, **tranh hạng 3**, bục trao giải); tự chia đội cân trình; **lịch theo giờ và sân** (giờ bắt đầu, phút/trận, số sân — không đội nào đánh 2 trận cùng lúc).
+- **Hoàn tác**: bấm nhầm *Xong vòng*, *Xong sân*, *Xếp lại*, *Bắt đầu buổi mới*… có 10 giây để bấm **Hoàn tác**.
 - **Gửi nhóm**: dạng **ảnh** (vòng hiện tại + lịch dự kiến, hoặc sân & hàng chờ) hoặc dạng chữ cho Zalo, Messenger.
 
 **Người chơi & thống kê**
@@ -26,10 +27,11 @@ Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lôn
 **Phòng online** (tuỳ chọn, Firebase miễn phí)
 - **Sảnh phòng**: mở web là thấy danh sách phòng (lọc theo môn, tìm theo tên), tạo phòng / nhập mã; phòng đã vào nằm ở *Phòng của bạn*.
 - Mỗi phòng có **mật khẩu xem** và **mã quản lý**; cả nhóm xem trực tiếp, chỉ quản lý được sửa.
+- **Xin vào danh sách**: người mới bấm *Xin thêm tên*, quản lý bấm *Thêm* là máy người đó tự nhận tên.
 - **Tự điểm danh**: người chơi chọn "Tôi là…", bấm *Tôi có mặt / Tôi về*; được **báo khi tới lượt** vào sân (rung + thông báo).
 - **Quản lý chính / phụ**: cấp **mã phụ** cho người giúp xếp sân (không đổi được cài đặt phòng), thu hồi bất cứ lúc nào.
 - Quản lý chính: **đổi tên phòng, đổi mật khẩu xem, đổi mã quản lý** (thu hồi mọi máy khác), **xoá phòng**.
-- **Chống ghi đè**: 2 người quản lý sửa cùng lúc không làm mất dữ liệu của nhau (người sau được báo và tải bản mới).
+- **Gộp thay đổi**: 2 người quản lý sửa cùng lúc, hoặc sửa lúc mất mạng, đều được gộp (người chơi, kết quả, tiền, kết quả giải); chỉ khi cả hai sửa cùng một chỗ mới giữ bản trên phòng và báo số chỗ trùng.
 - **Dùng được khi mất mạng** ở sân: app mở bằng bản đã lưu, phòng đã vào vẫn mở được; có mạng lại tự đồng bộ.
 
 ## Cách dùng
@@ -40,7 +42,7 @@ Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lôn
 
 ## Đưa lên mạng (miễn phí) với GitHub Pages
 Repo → **Settings → Pages** → Source: *Deploy from a branch* → chọn branch, thư mục `/ (root)` → Save.
-Sau 1–2 phút mở `https://<tên-github>.github.io/badminton_tool/` trên điện thoại, chọn **Thêm vào màn hình chính** để dùng như app.
+Sau 1–2 phút mở `https://<tên-github>.github.io/badmintool/` trên điện thoại, chọn **Thêm vào màn hình chính** để dùng như app.
 
 ## Bật phòng online (miễn phí với Firebase)
 
@@ -82,6 +84,8 @@ Web tĩnh, không cần build: `index.html` nạp `css/app.css`, `css/icons.css`
 | `js/me.js` | "Tôi là ai", tự điểm danh, báo tới lượt |
 | `js/tour.js` | Giải đấu vòng tròn / loại trực tiếp |
 | `js/shareimg.js` | Vẽ lịch thành ảnh để gửi nhóm |
+| `js/undo.js` | Hoàn tác |
+| `js/merge.js` | Gộp 3 chiều (gốc / trên máy / máy chủ) |
 | `js/cloud.js` | Phòng online (Firebase), đồng bộ có phiên bản, sảnh phòng |
 | `js/roomadmin.js` | Đổi tên / mật khẩu / mã quản lý, mã quản lý phụ |
 | `js/views.js` | Vẽ các màn hình |

@@ -75,12 +75,13 @@ function sanitizeState(raw) {
     const res = {};
     Object.entries(obj(t.res)).forEach(([k, r]) => {
       r = obj(r);
-      if (/^r\d{1,2}m\d{1,3}$/.test(k) && seenT.has(r.a) && seenT.has(r.b) && ['a', 'b'].includes(r.winner)) {
+      if ((/^r\d{1,2}m\d{1,3}$/.test(k) || k === 'p3') && seenT.has(r.a) && seenT.has(r.b) && ['a', 'b'].includes(r.winner)) {
         res[k] = { a: r.a, b: r.b, winner: r.winner };
         if (Array.isArray(r.score) && r.score.length === 2) res[k].score = [int(r.score[0], 0, 99, 0), int(r.score[1], 0, 99, 0)];
       }
     });
-    if (teams.length >= 2) session.tour = { fmt: oneOf(t.fmt, ['rr', 'ko'], 'rr'), teams, res, created: num(t.created) };
+    if (teams.length >= 2) session.tour = { fmt: oneOf(t.fmt, ['rr', 'ko'], 'rr'), teams, res, created: num(t.created),
+      third: !!t.third, start: num(t.start, Date.now()), dur: int(t.dur, 5, 90, 15), courts: int(t.courts, 1, 10, 1) };
   }
   if (ses.money) {
     const m = obj(ses.money);

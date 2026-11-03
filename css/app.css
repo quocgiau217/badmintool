@@ -495,3 +495,9 @@ body:not(.has-bar) .undo{bottom:calc(90px + env(safe-area-inset-bottom))}
 .undo.show .undo-time{animation:undoTime 10s linear forwards}
 @keyframes undoTime{to{transform:scaleX(0)}}
 @media (prefers-reduced-motion: reduce){.undo{transition:opacity .2s;transform:none}.undo.show .undo-time{animation:none}}
+
+/* ---------- xin vào danh sách ---------- */
+.reqs{margin-bottom:12px;border-color:var(--accent)}
+.reqs-h{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:6px}
+.req{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.req .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

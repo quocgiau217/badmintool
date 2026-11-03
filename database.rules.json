@@ -80,6 +80,31 @@
           }
         }
       }
+    },
+    "joinreq": {
+      "$k": {
+        ".read": true,
+        ".write": "auth != null && !newData.exists() && (root.child('adminKeys').child($k).exists() && root.child('admins').child($k).child(auth.uid).val() === root.child('adminKeys').child($k).val())",
+        "$rid": {
+          ".write": "auth != null && root.child('data').child($k).exists() && ((!data.exists() && newData.child('u').val() === auth.uid) || root.child('admins').child($k).child(auth.uid).exists())",
+          ".validate": "$rid.matches(/^[A-Za-z0-9_-]{4,24}$/) && newData.hasChildren(['n', 't', 'u']) && newData.child('n').isString() && newData.child('n').val().length > 0 && newData.child('n').val().length <= 40 && newData.child('t').isNumber() && newData.child('u').isString()",
+          "n": {
+            ".validate": true
+          },
+          "t": {
+            ".validate": true
+          },
+          "u": {
+            ".validate": true
+          },
+          "pid": {
+            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,24}$/)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
     }
   }
 }

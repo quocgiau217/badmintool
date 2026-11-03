@@ -130,7 +130,7 @@ function applyRemoteStr(s) {
   const clean = sanitizeState(obj);
   S.players = clean.players; S.settings = clean.settings; S.session = clean.session; S.archive = clean.archive;
   try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {}
-  applyCheckins();
+  applyCheckins(); checkMyReq();
   selSlot = null;
   render();
   return true;
@@ -248,11 +248,11 @@ function enterRoom(info) {
   remoteV = 0; roomSynced = false; pushAgain = false;
   const id = room.id;
   stopCheckins(); lastMySpot = null;
-  cloudInit().then(() => { if (room && room.id === id) { subscribeRoom(); subscribeCheckins(); } })
+  cloudInit().then(() => { if (room && room.id === id) { subscribeRoom(); subscribeCheckins(); subscribeJoinReqs(); } })
     .catch(() => { roomStatus = 'offline'; renderHero(); window.addEventListener('online', () => { if (room && room.id === id && !unsubRoom) enterRoomSync(); }, { once: true }); });
   closeSheet(); render(); window.scrollTo(0, 0);
 }
-function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) { subscribeRoom(); subscribeCheckins(); } }).catch(() => {}); }
+function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) { subscribeRoom(); subscribeCheckins(); subscribeJoinReqs(); } }).catch(() => {}); }
 // mất mạng: vẫn mở được phòng đã vào trên máy này, dùng dữ liệu đã lưu; có mạng lại sẽ tự đồng bộ
 function openRoomOffline(r) {
   enterRoom({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, main: r.main !== false && !!r.admin, pw: r.pw || '', sport: r.sport });
@@ -332,7 +332,7 @@ async function deleteRoom() {
   const { id, key } = room;
   if (unsubRoom) unsubRoom(); unsubRoom = null; stopCheckins(); clearTimeout(pushT);
   try {
-    await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['checkin/' + key]: null, ['subKeys/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
+    await FB.update(FB.ref(fbDb), { ['data/' + key]: null, ['checkin/' + key]: null, ['joinreq/' + key]: null, ['subKeys/' + key]: null, ['rooms/' + id]: null, ['roomKeys/' + id]: null, ['adminKeys/' + key]: null, ['admins/' + key]: null });
   } catch (e) {
     subscribeRoom();
     throw new Error(/permission/i.test(String(e.code || e.message)) ? 'Không xoá được: cần quyền quản lý chính (phòng tạo từ bản cũ thì xoá trong Firebase Console)' : cloudError(e));

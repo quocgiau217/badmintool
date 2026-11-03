@@ -51,11 +51,11 @@ async function changePassword(code, pw) {
     await FB.set(dbRef('data/' + newKey), { s: JSON.stringify(syncPart()), t: Date.now(), by: myUid, v: 1 });
     for (const [h, val] of Object.entries(subs)) await FB.set(dbRef(`subKeys/${newKey}/${h}`), val);
     await FB.set(dbRef('roomKeys/' + id), newKey);
-    await FB.update(FB.ref(fbDb), { ['data/' + oldKey]: null, ['checkin/' + oldKey]: null, ['subKeys/' + oldKey]: null, ['adminKeys/' + oldKey]: null, ['admins/' + oldKey]: null });
-  } catch (e) { subscribeRoom(); subscribeCheckins(); throw new Error('Chưa đổi được mật khẩu: ' + cloudError(e)); }
+    await FB.update(FB.ref(fbDb), { ['data/' + oldKey]: null, ['checkin/' + oldKey]: null, ['joinreq/' + oldKey]: null, ['subKeys/' + oldKey]: null, ['adminKeys/' + oldKey]: null, ['admins/' + oldKey]: null });
+  } catch (e) { subscribeRoom(); subscribeCheckins(); subscribeJoinReqs(); throw new Error('Chưa đổi được mật khẩu: ' + cloudError(e)); }
   room.key = newKey; room.pw = pw; rememberRoom(room);
   try { localStorage.removeItem('badminton_room_v_' + id); } catch (e) {}
-  lastRemote = ''; subscribeRoom(); subscribeCheckins();
+  lastRemote = ''; subscribeRoom(); subscribeCheckins(); subscribeJoinReqs();
   closeSheet(); render(); toast('Đã đổi mật khẩu. Bấm "Mời" để gửi link mới cho cả nhóm');
 }
 

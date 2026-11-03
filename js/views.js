@@ -18,7 +18,7 @@ function render() {
   renderHero();
   const tabs = [['players', 'Người chơi', ICON.users], ['play', 'Xếp sân', ICON.court], ['stats', 'Thống kê', ICON.chart], ['money', 'Tiền', ICON.money]];
   document.getElementById('nav').innerHTML = tabs.map(([k, l, ic]) =>
-    `<button class="${S.tab === k ? 'on' : ''}" onclick="goTab('${k}')">${ic}${l}${k === 'play' && r && S.tab !== 'play' ? `<span class="badge">${r.no}</span>` : ''}</button>`).join('');
+    `<button class="${S.tab === k ? 'on' : ''}" onclick="goTab('${k}')">${ic}${l}${k === 'play' && r && S.tab !== 'play' ? `<span class="badge">${r.no}</span>` : ''}${k === 'players' && room && room.admin && pendingReqs().length ? `<span class="badge" aria-label="${pendingReqs().length} người xin vào">${pendingReqs().length}</span>` : ''}</button>`).join('');
   ensurePlan(); syncQueue();
   if (focusId && !S.players.some(p => p.id === focusId)) focusId = null;
   const app = document.getElementById('app');
@@ -95,9 +95,9 @@ function viewPlayers() {
       <button class="btn primary" onclick="quickAdd()" aria-label="Thêm">+</button></div>
     <div style="margin:8px 4px 0"><button class="link" onclick="bulkMode=true;render();document.getElementById('bulkInput').focus()"><i class="i i-clipboard"></i> Dán danh sách nhiều người (từ Zalo…)</button></div>`;
   const me = meCard('players');
-  if (!S.players.length) return `${add}<div class="empty" style="margin-top:20px"><div class="big"><i class="i i-users"></i></div><h3>Chưa có người chơi</h3>
+  if (!S.players.length) return `${me}${joinReqCard()}${add}<div class="empty" style="margin-top:20px"><div class="big"><i class="i i-users"></i></div><h3>Chưa có người chơi</h3>
       <p>Thêm tên các thành viên trong nhóm.<br>Danh sách được lưu lại cho các buổi sau.</p></div>`;
-  return `${me}${add}
+  return `${me}${joinReqCard()}${add}
     <div class="sec-title"><h2>Có mặt · ${on.length}</h2>
       ${!ed ? '' : off.length ? `<button class="link" onclick="haptic();setAllActive(true)">Chọn tất cả</button>`
                    : `<button class="link" onclick="haptic();setAllActive(false)">Bỏ chọn hết</button>`}</div>

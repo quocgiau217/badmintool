@@ -172,13 +172,14 @@ function shareRound(all) {
 }
 function openShare() {
   const r = curRound(); if (!r) return;
-  const plan = S.session.plan || [];
-  if (!plan.length) return shareRound(false);
-  openSheet(`<h3>Gửi vào nhóm</h3><p>Chia sẻ qua Zalo, Messenger… hoặc copy.</p>
-    <div style="display:grid;gap:10px">
-      <button class="btn block" onclick="shareRound(false)"><i class="i i-clipboard"></i> Chỉ vòng ${r.no}</button>
-      <button class="btn primary block" onclick="shareRound(true)"><i class="i i-calendar"></i> Cả lịch: vòng ${r.no} → ${plan[plan.length - 1].no}</button>
-    </div>`);
+  const plan = isQueue() ? [] : S.session.plan || [], last = plan.length ? plan[plan.length - 1].no : null;
+  openSheet(`<h3>Gửi vào nhóm</h3><p>Gửi qua Zalo, Messenger… dạng ảnh hoặc chữ.</p>
+    <div class="field"><label>Dạng ảnh</label><div style="display:grid;gap:10px">
+      <button class="btn primary block" onclick="shareImage(${!!last})"><i class="i i-share"></i> ${isQueue() ? 'Ảnh sân & hàng chờ' : last ? `Ảnh lịch: vòng ${r.no} → ${Math.min(last, r.no + 3)}` : `Ảnh vòng ${r.no}`}</button>
+      ${last ? `<button class="btn block" onclick="shareImage(false)"><i class="i i-share"></i> Ảnh chỉ vòng ${r.no}</button>` : ''}</div></div>
+    <div class="field"><label>Dạng chữ</label><div class="grid2">
+      <button class="btn" onclick="shareRound(false)"><i class="i i-clipboard"></i> ${isQueue() ? 'Sân đang đánh' : 'Vòng ' + r.no}</button>
+      ${last ? `<button class="btn" onclick="shareRound(true)"><i class="i i-calendar"></i> Cả lịch</button>` : ''}</div></div>`);
 }
 function focusP(id) { haptic(); focusId = focusId === id ? null : id; render(); }
 function replan() { haptic(); ensurePlan(true); render(); toast('Đã xếp lại lịch dự kiến'); }

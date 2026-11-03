@@ -29,6 +29,7 @@ function render() {
   document.body.classList.toggle('ro', !canEdit());
   animNext = false;
   checkMyTurn();
+  a11yPass(document.body);
   const inp = document.getElementById('nameInput');
   if (inp) inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); quickAdd(); } };
 }
@@ -82,15 +83,15 @@ function viewPlayers() {
     <div class="prow ${p.active ? '' : 'off'}">
       <button class="tap" onclick="${ed ? `editPlayer('${p.id}')` : `focusP('${p.id}');goTab('play')`}">${avatar(p)}
         <div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="meta">${LV[lvOf(p)]}${autoLv() ? ` · <i class="i i-star"></i> ${fmtRating(ratingsNow()[p.id] || r0Of(p))}` : ''}</div></div></button>
-      <button onclick="${ed ? `editPlayer('${p.id}')` : ''}">${lvBadge(p)}</button>
-      ${ed ? `<button class="toggle ${p.active ? 'on' : ''}" onclick="haptic();togglePlayer('${p.id}')" aria-label="Có mặt"></button>` : ''}
+      <button class="lvbtn" onclick="${ed ? `editPlayer('${p.id}')` : ''}" aria-label="Trình độ ${lvOf(p)}: ${LV[lvOf(p)]}${ed ? ', chạm để sửa' : ''}">${lvBadge(p)}</button>
+      ${ed ? `<button class="toggle ${p.active ? 'on' : ''}" onclick="haptic();togglePlayer('${p.id}')" aria-label="${esc(p.name)} có mặt"></button>` : ''}
     </div>`;
   const ed = canEdit();
   const add = !ed ? `<div class="ro-note"><i class="i i-eye"></i> Bạn đang xem danh sách của phòng. Chỉ người quản lý được thêm / sửa.</div>` : bulkMode ? `
     <textarea id="bulkInput" placeholder="Dán danh sách, mỗi dòng 1 tên&#10;Ví dụ:&#10;1. Hùng&#10;2. Lan&#10;3. Minh"></textarea>
     <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="bulkMode=false;render()">Huỷ</button>
       <button class="btn primary" style="flex:1" onclick="quickAdd()">Thêm tất cả</button></div>` : `
-    <div class="add-row"><input id="nameInput" type="text" placeholder="Nhập tên người chơi…" enterkeyhint="done" autocomplete="off" maxlength="30">
+    <div class="add-row"><input id="nameInput" type="text" aria-label="Tên người chơi mới" placeholder="Nhập tên người chơi…" enterkeyhint="done" autocomplete="off" maxlength="30">
       <button class="btn primary" onclick="quickAdd()" aria-label="Thêm">+</button></div>
     <div style="margin:8px 4px 0"><button class="link" onclick="bulkMode=true;render();document.getElementById('bulkInput').focus()"><i class="i i-clipboard"></i> Dán danh sách nhiều người (từ Zalo…)</button></div>`;
   const me = meCard('players');

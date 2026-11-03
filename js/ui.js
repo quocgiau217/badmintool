@@ -3,7 +3,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const LV = ['', 'Mới chơi', 'Yếu', 'Trung bình', 'Khá', 'Giỏi'];
 function hue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 360; return h; }
 function initials(name) { const w = name.trim().split(/\s+/); return (w[w.length - 1] || '?').charAt(0); }
-function avatar(p, cls = '') { return `<div class="av ${cls}" style="background:hsl(${hue(p.name)} 55% 46%)">${esc(initials(p.name))}</div>`; }
+function avatar(p, cls = '') { return `<div class="av ${cls}" style="background:hsl(${hue(p.name)} 50% 36%)" aria-hidden="true">${esc(initials(p.name))}</div>`; }
 const medalHtml = i => `<span class="medal m${i + 1}">${i + 1}</span>`;
 const dots = n => `<span class="dots">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'f' : ''}"></i>`).join('')}</span>`;
 const lvBadge = p => { const l = lvOf(p); return `<span class="lv lv${l}">${dots(l)} ${l}</span>`; };
@@ -55,14 +55,47 @@ function toast(msg) {
 }
 
 /* ---------- bottom sheet ---------- */
+let sheetReturn = null, sheetHideT = null;
 function openSheet(html) {
-  document.getElementById('sheet').innerHTML = `<div class="grab"></div>${html}`;
-  document.getElementById('sheet').classList.add('show');
+  const sh = document.getElementById('sheet'), wasOpen = sh.classList.contains('show');
+  if (!wasOpen) sheetReturn = document.activeElement;
+  clearTimeout(sheetHideT);
+  sh.hidden = false;
+  sh.innerHTML = `<div class="grab" aria-hidden="true"></div>${html}`;
+  const h = sh.querySelector('h3'); if (h) h.id = 'sheetTitle';
+  a11yPass(sh);
+  void sh.offsetHeight; // để hiệu ứng trượt chạy sau khi bỏ hidden
+  sh.classList.add('show');
   document.getElementById('backdrop').classList.add('show');
+  // đưa focus vào hộp thoại (ô nhập đầu tiên, hoặc chính hộp thoại) nếu không có gì đang được focus bên trong
+  if (!sh.contains(document.activeElement)) {
+    const first = sh.querySelector('input:not([type=checkbox]):not([hidden]), textarea, select');
+    sh.tabIndex = -1; (first && !matchMedia('(pointer: coarse)').matches ? first : sh).focus({ preventScroll: true });
+  }
 }
 function closeSheet() {
-  document.getElementById('sheet').classList.remove('show');
+  const sh = document.getElementById('sheet'); if (!sh.classList.contains('show')) return;
+  sh.classList.remove('show');
   document.getElementById('backdrop').classList.remove('show');
+  sheetHideT = setTimeout(() => { if (!sh.classList.contains('show')) sh.hidden = true; }, 320);
+  if (sheetReturn && document.body.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
+  sheetReturn = null;
+}
+// Esc đóng hộp thoại; Tab không thoát ra ngoài hộp thoại khi đang mở
+document.addEventListener('keydown', e => {
+  const sh = document.getElementById('sheet'); if (!sh || !sh.classList.contains('show')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeSheet(); return; }
+  if (e.key !== 'Tab') return;
+  const f = [...sh.querySelectorAll('button:not([disabled]), input:not([disabled]), select, textarea, a[href], summary')].filter(x => x.offsetParent !== null);
+  if (!f.length) return;
+  if (e.shiftKey && (document.activeElement === f[0] || document.activeElement === sh)) { e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+});
+// Trạng thái cho trình đọc màn hình: nút chọn (seg / mode / sport / chip) báo đang chọn, công tắc báo bật/tắt, tab đang mở
+function a11yPass(root) {
+  root.querySelectorAll('.seg button, .mode button, .sport button, .chipbtn, .lvpick button').forEach(b => b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false'));
+  root.querySelectorAll('.toggle').forEach(b => { b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', b.classList.contains('on') ? 'true' : 'false'); });
+  root.querySelectorAll('nav button').forEach(b => { if (b.classList.contains('on')) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
 }
 let pendingConfirm = null;
 function confirmSheet(title, msg, okLabel, fn) {

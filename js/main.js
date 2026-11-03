@@ -1,0 +1,13 @@
+/* ================== KHỞI ĐỘNG ==================
+ * File này nạp cuối cùng: mọi hàm đã được khai báo ở các file trước. */
+
+// Chặn mọi thao tác sửa khi đang ở chế độ chỉ xem
+['addPlayers', 'quickAdd', 'togglePlayer', 'setLevel', 'removePlayer', 'editPlayer', 'renamePlayer', 'generateRound', 'finishRound',
+ 'newSession', 'setWinner', 'tapSlot', 'editMatch', 'replan', 'openSettings', 'setCourts', 'setMode', 'setPreview', 'setAllActive',
+ 'setCourtName', 'openCourt', 'removeCourt', 'addCourt'].forEach(n => {
+  const f = window[n]; if (typeof f !== 'function') return;
+  window[n] = function () { if (!canEdit()) { lockedToast(); return; } return f.apply(this, arguments); };
+});
+
+render();
+bootCloud();

@@ -1,6 +1,6 @@
 # 🏸🏓 Xếp Sân · Cầu lông & Pickleball
 
-Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lông** hoặc **pickleball** cho nhóm 4–20 người. Chỉ 1 file `index.html`, không cần server, dữ liệu lưu ngay trên máy (localStorage).
+Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lông** hoặc **pickleball** cho nhóm 4–20 người. Web tĩnh, không cần server, dữ liệu lưu ngay trên máy (localStorage).
 
 ## Tính năng
 - **2 môn: Cầu lông và Pickleball**: mỗi phòng chọn 1 môn khi tạo (đổi được trong ⚙️ Cài đặt). Theo môn sẽ đổi: màu sân (pickleball xanh dương, có vùng bếp/kitchen gần lưới), nút điểm nhanh (cầu lông tới 21, pickleball tới 11), biểu tượng và tin nhắn gửi nhóm. Danh sách phòng lọc được theo môn.
@@ -53,6 +53,24 @@ Không bật thì app vẫn chạy bình thường, dữ liệu chỉ lưu trên
 
 ### Giới hạn gói miễn phí
 Khoảng 100 người mở cùng lúc, 1 GB lưu trữ, 10 GB tải/tháng — dư sức cho nhiều nhóm 4–20 người.
+
+### Cấu trúc code (cho lập trình viên)
+Web tĩnh, không cần build: `index.html` nạp `css/app.css` và các file trong `js/` theo thứ tự:
+
+| File | Nội dung |
+|---|---|
+| `js/state.js` | Dữ liệu, lưu trên máy, thống kê |
+| `js/algo.js` | Thuật toán xếp sân, lịch dự kiến, thêm/bỏ sân |
+| `js/actions.js` | Thao tác: thêm người, xong vòng, ghi kết quả, đổi chỗ… |
+| `js/ui.js` | Tiện ích giao diện, môn chơi, cài đặt |
+| `js/cloud.js` | Phòng online (Firebase), sảnh phòng |
+| `js/views.js` | Vẽ các màn hình |
+| `js/main.js` | Khởi động (nạp cuối) |
+
+Chạy test thuật toán (cần Node 18+, không cần cài gì thêm):
+```bash
+npm test
+```
 
 ### Thử trên máy với trình giả lập (cho lập trình viên)
 ```bash

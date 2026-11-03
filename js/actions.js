@@ -47,7 +47,7 @@ function finishRound() {
   if (ok) {
     S.session.plan.shift();
     next.no = S.session.rounds.length + 1;
-    S.session.rounds.push(next);
+    S.session.rounds.push(startCourts(next));
     S.session.planSig = planSig(); // các vòng dự kiến còn lại giữ nguyên
     selSlot = null; animNext = true; save(); render();
   } else generateRound();

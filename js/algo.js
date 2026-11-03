@@ -72,6 +72,47 @@ function buildRound(history) {
   courts.forEach((c, i) => c.name = courtLabel(i));
   return { no: history.length + 1, courts, resting, done: false };
 }
+const isQueue = () => S.settings.flow === 'queue';
+const startCourts = r => { const t = nowSrv(); r.courts.forEach(c => c.start = t); return r; };
+
+/* ---------- chế độ xếp hàng: sân nào xong thì người kế tiếp vào ngay ---------- */
+// trận vừa xong được lưu vào lịch sử (trước vòng đang chạy); người đầu hàng vào sân, người vừa đánh xuống cuối hàng
+function finishCourt(ci) {
+  const r = curRound(), c = r && r.courts[ci]; if (!c) return;
+  haptic();
+  const rounds = S.session.rounds, games = rounds.filter(x => x.done).length;
+  rounds.splice(rounds.length - 1, 0, { no: games + 1, courts: [Object.assign({}, c, { end: nowSrv() })], resting: [], done: true, q: true });
+  const act = new Set(activePlayers().map(p => p.id)), out = [...c.a, ...c.b].filter(id => act.has(id));
+  const queue = r.resting.filter(id => act.has(id)), need = 4;
+  const st = computeStats(rounds), credit = S.session.credit || {};
+  let pick = queue.slice(0, need);
+  if (pick.length < need) { // hàng chờ không đủ: lấy thêm người vừa đánh, ưu tiên ai ít trận
+    const score = id => (st.played[id] || 0) + (credit[id] || 0);
+    pick = pick.concat(shuffle(out).sort((x, y) => score(x) - score(y)).slice(0, need - pick.length));
+  }
+  if (pick.length < need) { // không đủ người cho sân này nữa
+    r.courts.splice(ci, 1); r.resting = [...queue, ...out];
+    if (!r.courts.length) r.done = true;
+    toast(`Không đủ người — đã đóng ${cName(c, ci)}`);
+  } else {
+    const [nc] = bestArrangement(pick, st, S.settings.mode === 'balanced');
+    nc.name = c.name; nc.start = nowSrv();
+    r.courts[ci] = nc;
+    r.resting = [...queue.filter(id => !pick.includes(id)), ...out.filter(id => !pick.includes(id))];
+    toast(`${cName(nc, ci)}: ${nc.a.map(id => P(id).name).join(' & ')} vs ${nc.b.map(id => P(id).name).join(' & ')}`);
+  }
+  selSlot = null; animNext = false; save(); render();
+}
+// giữ hàng chờ khớp với danh sách có mặt: người mới đến xếp cuối hàng, người về rời hàng
+function syncQueue() {
+  const r = curRound(); if (!isQueue() || !r || !canEdit()) return false;
+  const act = new Set(activePlayers().map(p => p.id)), inRound = new Set([...r.courts.flatMap(c => [...c.a, ...c.b]), ...r.resting]);
+  const before = r.resting.join();
+  r.resting = r.resting.filter(id => act.has(id));
+  activePlayers().forEach(p => { if (!inRound.has(p.id)) r.resting.push(p.id); });
+  if (r.resting.join() === before) return false;
+  save(); return true;
+}
 /* ---------- sân: tên, thêm / bỏ sân giữa vòng ---------- */
 const MAX_COURTS = 10;
 const courtLabel = i => ((S.settings.courtNames || [])[i] || '').trim() || `Sân ${i + 1}`;
@@ -118,7 +159,7 @@ function addCourt() {
   const score = id => (st.played[id] || 0) + (credit[id] || 0);
   const pick = shuffle(r.resting).sort((x, y) => (score(x) - score(y)) || ((st.satStreak[y] || 0) - (st.satStreak[x] || 0))).slice(0, 4);
   const [c] = bestArrangement(pick, st, S.settings.mode === 'balanced');
-  c.name = courtLabel(r.courts.length);
+  c.name = courtLabel(r.courts.length); c.start = nowSrv();
   r.courts.push(c);
   r.resting = r.resting.filter(id => !pick.includes(id));
   S.settings.courts = Math.max(S.settings.courts, r.courts.length);
@@ -129,7 +170,7 @@ function addCourt() {
 function generateRound() {
   if (activePlayers().length < 4) { toast('Cần ít nhất 4 người đang có mặt'); return; }
   if (curRound()) S.session.rounds.pop(); // xếp lại vòng hiện tại
-  S.session.rounds.push(buildRound(S.session.rounds));
+  S.session.rounds.push(startCourts(buildRound(S.session.rounds)));
   S.session.plan = []; // lịch dự kiến sẽ tính lại
   selSlot = null; animNext = true;
   save(); render();
@@ -153,7 +194,7 @@ function planValid(rd) {
 // Giữ nguyên các vòng dự kiến còn hợp lệ, chỉ bổ sung cho đủ số vòng
 function ensurePlan(force) {
   if (room && !room.admin) return; // người xem dùng lịch do quản lý tạo
-  if (!curRound() || activePlayers().length < 4) { S.session.plan = []; return; }
+  if (!curRound() || activePlayers().length < 4 || isQueue()) { if ((S.session.plan || []).length) { S.session.plan = []; save(); } return; }
   const sig = planSig();
   if (!force && S.session.planSig === sig && (S.session.plan || []).length === S.settings.preview) return;
   if (force || S.session.planSig !== sig) S.session.plan = [];

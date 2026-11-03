@@ -425,3 +425,13 @@ nav button{font-size:10.5px}
 .me-name{font-weight:700;text-align:left;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .me-card .btn.sm{flex:none}
 .me-card .bell{width:36px;height:36px;background:var(--surface-2);font-size:16px}
+
+/* ---------- xếp hàng & đồng hồ ---------- */
+.timer{margin-left:auto;margin-right:8px;font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.finish-court{margin-top:10px;min-height:46px;border-radius:14px}
+.queue{display:flex;flex-direction:column;gap:6px}
+.qitem{display:flex;align-items:center;gap:8px}
+.qitem .chip{width:auto;flex:1;background:var(--surface-2);box-shadow:none}
+.qitem .qn{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--surface-2);color:var(--muted);flex:none}
+.qitem.next .qn{background:var(--accent);color:#3b2a00}
+.qitem.next .chip{background:var(--accent-soft)}

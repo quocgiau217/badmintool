@@ -18,7 +18,7 @@ function render() {
   const tabs = [['players', 'Người chơi', ICON.users], ['play', 'Xếp sân', ICON.court], ['stats', 'Thống kê', ICON.chart], ['money', 'Tiền', ICON.money]];
   document.getElementById('nav').innerHTML = tabs.map(([k, l, ic]) =>
     `<button class="${S.tab === k ? 'on' : ''}" onclick="goTab('${k}')">${ic}${l}${k === 'play' && r && S.tab !== 'play' ? `<span class="badge">${r.no}</span>` : ''}</button>`).join('');
-  ensurePlan();
+  ensurePlan(); syncQueue();
   if (focusId && !S.players.some(p => p.id === focusId)) focusId = null;
   const app = document.getElementById('app');
   app.innerHTML = S.tab === 'players' ? viewPlayers() : S.tab === 'play' ? viewPlay() : S.tab === 'money' ? viewMoney() : viewStats();
@@ -49,7 +49,7 @@ function renderHero() {
     <div class="pills">
       <div class="pill"><b>${act}</b><span>có mặt</span></div>
       <div class="pill"><b>${Math.min(S.settings.courts, Math.max(1, Math.floor(act / 4)))}</b><span>sân</span></div>
-      <div class="pill"><b>${rounds.length}</b><span>vòng</span></div>
+      ${isQueue() ? `<div class="pill"><b>${rounds.filter(x => x.done).length}</b><span>trận xong</span></div>` : `<div class="pill"><b>${rounds.filter(x => !x.q).length}</b><span>vòng</span></div>`}
     </div>`;
 }
 function goTab(t) { haptic(); S.tab = t; selSlot = null; save(); render(); window.scrollTo(0, 0); }
@@ -59,7 +59,8 @@ function barHtml() {
   if (S.tab === 'players' && act >= 4)
     return `<div class="bar-in"><button class="btn primary" onclick="goTab('play')">Sang xếp sân ${ICON.next}</button></div>`;
   if (S.tab === 'play' && act >= 4) {
-    if (!r) return `<div class="bar-in"><button class="btn primary" onclick="haptic();generateRound()">🎲 Xếp vòng ${S.session.rounds.length + 1}</button></div>`;
+    if (!r) return `<div class="bar-in"><button class="btn primary" onclick="haptic();generateRound()">${isQueue() ? '▶️ Bắt đầu xếp hàng' : `🎲 Xếp vòng ${S.session.rounds.filter(x => !x.q).length + 1}`}</button></div>`;
+    if (isQueue()) return '';
     return `<div class="bar-in"><button class="btn ghost" onclick="haptic();generateRound();toast('Đã xếp lại')" aria-label="Xếp lại">${ICON.shuffle}</button>
       <button class="btn primary" onclick="haptic();finishRound()">Xong · Vòng ${r.no + 1} ${ICON.next}</button></div>`;
   }
@@ -120,7 +121,7 @@ function viewPlayInner() {
     <div class="card empty" style="margin-top:12px"><div class="big">🎲</div>
       <h3>${S.session.rounds.length ? `Đã chơi ${S.session.rounds.length} vòng` : 'Sẵn sàng xếp sân'}</h3>
       <p>Bấm nút bên dưới để chia cặp. Ai chơi ít sẽ được ưu tiên vào sân, hạn chế trùng đồng đội.</p></div>`;
-  const bal = S.settings.mode === 'balanced';
+  const bal = S.settings.mode === 'balanced', q = isQueue();
   const courts = r.courts.map((c, ci) => {
     const sum = t => c[t].reduce((s, id) => s + P(id).level, 0);
     const half = t => `<div class="half ${t} ${c.winner === t ? 'won' : c.winner ? 'lost' : ''}">
@@ -131,21 +132,26 @@ function viewPlayInner() {
       </div>`;
     return `<div class="court-card ${animNext ? 'anim' : ''}" style="--d:${ci * 70}ms">
       <div class="court-head"><${canEdit() ? `button onclick="openCourt(${ci})" aria-label="Sửa sân"` : 'div'} class="court-no"><i>${ci + 1}</i><div>${esc(cName(c, ci))}${canEdit() ? ` <span class="pen">${ICON.edit}</span>` : ''}${bal ? `<span class="court-sum">Trình ${sum('a')} – ${sum('b')}</span>` : ''}</div></${canEdit() ? 'button' : 'div'}>
+        ${c.start ? `<span class="timer" data-start="${c.start}">${fmtElapsed(c.start)}</span>` : ''}
         ${canEdit() || c.score ? `<button class="score-btn ${c.score ? 'has' : ''}" onclick="editMatch(${S.session.rounds.length - 1},${ci})">${c.score ? c.score.join(' – ') : `${ICON.edit} Tỉ số`}</button>` : ''}</div>
       <div class="court ${SP().key === 'pickleball' ? 'pb' : ''}">${half('a')}<div class="vs">VS</div>${half('b')}</div>
+      ${q && canEdit() ? `<button class="btn primary block finish-court" onclick="finishCourt(${ci})">✅ Xong ${esc(cName(c, ci))} · người kế tiếp vào sân</button>` : ''}
     </div>`;
   }).join('');
-  const rest = r.resting.length ? `<div class="rest-card ${animNext ? 'anim' : ''}" style="--d:${r.courts.length * 70}ms">
+  const rest = !r.resting.length ? '' : q ? `<div class="rest-card">
+      <div class="hd">⏳ Hàng chờ <span class="tag">${r.resting.length}</span><span class="small muted" style="font-weight:500;margin-left:auto">sân nào xong, 4 người đầu vào</span></div>
+      <div class="queue">${r.resting.map((id, i) => `<div class="qitem ${i < 4 ? 'next' : ''}"><span class="qn">${i + 1}</span>${chip(id, { rest: i })}</div>`).join('')}</div></div>`
+    : `<div class="rest-card ${animNext ? 'anim' : ''}" style="--d:${r.courts.length * 70}ms">
       <div class="hd">☕ Nghỉ vòng này <span class="tag">${r.resting.length}</span></div>
-      <div class="rest-wrap">${r.resting.map((id, i) => chip(id, { rest: i })).join('')}</div></div>` : '';
+      <div class="rest-wrap">${r.resting.map((id, i) => chip(id, { rest: i })).join('')}</div></div>`;
   return `
-    <div class="round-h"><div class="t"><b>Vòng ${r.no}</b><span>${selSlot ? '👆 Chọn người thứ 2 để đổi chỗ' : `${r.courts.length} sân · ${bal ? 'cân trình' : 'ngẫu nhiên'}`}</span></div>
+    <div class="round-h"><div class="t"><b>${q ? 'Đang đánh' : `Vòng ${r.no}`}</b><span>${selSlot ? '👆 Chọn người thứ 2 để đổi chỗ' : `${r.courts.length} sân · ${q ? `xếp hàng · ${r.resting.length} người chờ` : bal ? 'cân trình' : 'ngẫu nhiên'}`}</span></div>
       ${canEdit() ? `<button class="icon-btn" onclick="openSettings()" aria-label="Cài đặt">${ICON.gear}</button>` : ''}
       <button class="icon-btn" onclick="openShare()" aria-label="Gửi nhóm">${ICON.share}</button></div>
     ${courts}
-    ${canEdit() && r.resting.length >= 4 && r.courts.length < MAX_COURTS ? `<button class="add-court" onclick="addCourt()">➕ Có thêm sân trống? Mở thêm 1 sân<span>Lấy 4 người đang nghỉ vào đánh ngay</span></button>` : ''}
+    ${canEdit() && r.resting.length >= 4 && r.courts.length < MAX_COURTS ? `<button class="add-court" onclick="addCourt()">➕ Có thêm sân trống? Mở thêm 1 sân<span>${q ? 'Lấy 4 người đầu hàng chờ' : 'Lấy 4 người đang nghỉ'} vào đánh ngay</span></button>` : ''}
     ${rest}
-    <div class="tip">💡 <span>${canEdit() ? 'Chạm 2 người bất kỳ để đổi chỗ (kể cả người đang nghỉ). Bấm 🏆 để ghi đội thắng — tuỳ chọn.'
+    <div class="tip">💡 <span>${canEdit() ? (q ? 'Sân nào đánh xong thì bấm "Xong" ở sân đó. Chạm 2 người để đổi chỗ (kể cả trong hàng chờ).' : 'Chạm 2 người bất kỳ để đổi chỗ (kể cả người đang nghỉ). Bấm 🏆 để ghi đội thắng — tuỳ chọn.')
       : 'Chạm vào tên để tô sáng người đó và xem lịch đánh / nghỉ. Trang tự cập nhật khi người quản lý thay đổi.'}</span></div>
     ${upcomingHtml(r)}`;
 }
@@ -196,7 +202,7 @@ function viewStats() {
     const isOpen = openHist.has(r.no) || (!openHist.size && k === 0);
     const res = r.courts.filter(c => c.winner).length;
     return `
-    <details class="hist" ${isOpen ? 'open' : ''} ontoggle="histToggle(${r.no}, this.open)"><summary>Vòng ${r.no} ${r.done ? '' : '<span class="tag">Đang chơi</span>'}
+    <details class="hist" ${isOpen ? 'open' : ''} ontoggle="histToggle(${r.no}, this.open)"><summary>${r.q ? `Trận ${r.no} · ${esc(cName(r.courts[0], 0))}` : !r.done && isQueue() ? 'Đang đánh' : `Vòng ${r.no}`} ${r.done ? '' : '<span class="tag">Đang chơi</span>'}
       <span class="small muted" style="font-weight:500">${res}/${r.courts.length} có kết quả</span><span class="chev">${ICON.chev}</span></summary>
       <div class="body">${r.courts.map((c, i) => `<button class="match" onclick="editMatch(${ri},${i})"><div class="side ${c.winner === 'a' ? 'w' : ''}">${nm(c.a)}</div>
         <div class="mid-s"><span class="sn">${esc(cShort(c, i))}</span>${c.score ? `<b class="sc">${c.score.join('–')}</b>` : c.winner || !canEdit() ? '' : `<span class="ed">${ICON.edit}</span>`}</div>

@@ -88,6 +88,8 @@ function openSettings() {
     <button class="btn primary" onclick="closeSheet();generateRound();toast('Đã xếp lại theo cài đặt mới')">Xếp lại ngay</button></div>`);
 }
 function setCourts(c) { S.settings.courts = Math.max(1, Math.min(MAX_COURTS, c)); save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
+function setFlow(f) { S.settings.flow = f; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
+const fmtElapsed = t => { const s = Math.max(0, Math.floor((nowSrv() - t) / 1000)); return `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function setMode(m) { S.settings.mode = m; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
 function settingsHtml() {
   const act = activePlayers().length, maxC = Math.max(1, Math.floor(act / 4));
@@ -101,11 +103,15 @@ function settingsHtml() {
     <div class="field"><label>Tên sân <span class="hint-i">— vd: Sân 3, Sân 7 theo nhà thi đấu</span></label><div class="cnames">
       ${Array.from({ length: S.settings.courts }, (_, i) => `<input type="text" maxlength="20" placeholder="Sân ${i + 1}"
         value="${esc(((S.settings.courtNames || [])[i] || '').trim())}" onchange="setCourtName(${i},this.value)" aria-label="Tên sân ${i + 1}">`).join('')}</div></div>
+    <div class="field"><label>Cách luân phiên</label><div class="mode">
+      <button class="${S.settings.flow !== 'queue' ? 'on' : ''}" onclick="setFlow('rounds')"><b>🔄 Theo vòng</b><span>Các sân đổi người cùng lúc</span></button>
+      <button class="${S.settings.flow === 'queue' ? 'on' : ''}" onclick="setFlow('queue')"><b>⏩ Xếp hàng</b><span>Sân nào xong, người chờ vào ngay</span></button>
+    </div></div>
     <div class="field"><label>Cách xếp</label><div class="mode">
       <button class="${S.settings.mode === 'balanced' ? 'on' : ''}" onclick="setMode('balanced')"><b>⚖️ Cân trình</b><span>2 đội ngang sức</span></button>
       <button class="${S.settings.mode === 'random' ? 'on' : ''}" onclick="setMode('random')"><b>🎲 Ngẫu nhiên</b><span>Bỏ qua trình độ</span></button>
     </div></div>
-    <div class="field"><label>Xem trước lịch</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
+    <div class="field" ${S.settings.flow === 'queue' ? 'hidden' : ''}><label>Xem trước lịch</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
       `<button class="${S.settings.preview === n ? 'on' : ''}" onclick="setPreview(${n})">${n ? n + ' vòng' : 'Tắt'}</button>`).join('')}</div></div>
     ${act >= 4 ? `<div class="info">ℹ️ <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.
       ${S.settings.courts > maxC ? `<br>Có ${S.settings.courts} sân nhưng chỉ đủ người cho ${maxC} sân.` : ''}</div></div>` : ''}`;

@@ -70,13 +70,22 @@ function spotText(s) {
   if (!s) return '';
   if (s.ci != null) return `${SP().emoji} Đang ở <b>${esc(cName(s.c, s.ci))}</b>${s.partner.length ? ' · cùng ' + esc(names(s.partner)) : ''} · gặp ${esc(names(s.opp))}`;
   const next = (S.session.plan || []).find(rd => rd.courts.some(c => [...c.a, ...c.b].includes(myPid())));
+  if (s.rest && isQueue()) { const k = s.r.resting.indexOf(myPid()) + 1; return k <= 4 ? `⏳ Thứ ${k} trong hàng chờ · <b>chuẩn bị vào sân!</b>` : `⏳ Thứ ${k} trong hàng chờ`; }
   if (s.rest) return `☕ Nghỉ vòng này${next ? ` · vào sân ở vòng ${next.no} (dự kiến)` : ''}`;
   return '';
 }
+let lastNextUp = null;
 function checkMyTurn() {
   const s = mySpot(), key = s && s.ci != null ? `${s.r.no}:${s.ci}:${[...s.c.a, ...s.c.b].join()}` : '';
   if (lastMySpot !== null && key && key !== lastMySpot) notifyTurn(s);
   lastMySpot = key;
+  // xếp hàng: báo trước khi vào nhóm 4 người đầu hàng
+  const nextUp = !!(s && s.rest && isQueue() && s.r.resting.indexOf(myPid()) < 4);
+  if (lastNextUp === false && nextUp) {
+    try { navigator.vibrate && navigator.vibrate(150); } catch (e) {}
+    toast('⏳ Chuẩn bị! Bạn vào sân ở lượt tới');
+  }
+  lastNextUp = s ? nextUp : null;
 }
 function notifyTurn(s) {
   const msg = `${cName(s.c, s.ci)}${s.partner.length ? ' · cùng ' + names(s.partner) : ''} · gặp ${names(s.opp)}`;

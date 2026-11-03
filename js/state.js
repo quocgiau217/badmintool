@@ -35,6 +35,7 @@ function cleanCourt(c) {
   if (Array.isArray(c.score) && c.score.length === 2) out.score = [int(c.score[0], 0, 99, 0), int(c.score[1], 0, 99, 0)];
   if (c.name != null) out.name = str(c.name, 20);
   if (c.start != null) out.start = num(c.start);
+  if (c.end != null) out.end = num(c.end);
   return out;
 }
 function cleanRound(r) {
@@ -55,7 +56,7 @@ function sanitizeState(raw) {
   }).slice(0, 200);
   const settings = {
     courts: int(set.courts, 1, 10, 2), mode: oneOf(set.mode, ['balanced', 'random'], 'balanced'),
-    preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
+    preview: oneOf(set.preview, [0, 2, 3, 5, 8], 3), flow: oneOf(set.flow, ['rounds', 'queue'], 'rounds'), sport: oneOf(set.sport, ['badminton', 'pickleball'], 'badminton'),
     courtNames: arr(set.courtNames).slice(0, 10).map(x => str(x, 20)),
   };
   const bank = obj(set.bank);

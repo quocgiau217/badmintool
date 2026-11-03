@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Xếp Sân">
-<title>Xếp Sân Cầu Lông</title>
+<title>Xếp Sân · Cầu lông & Pickleball</title>
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -29,6 +29,7 @@
   --shadow-lg:0 8px 30px rgba(16,40,28,.18);
   --nav-bg:rgba(255,255,255,.86);
   --r:18px; --grad:linear-gradient(135deg,#0e7a57 0%,#16a877 100%);
+  --pb-1:#2f6fc4; --kitchen:rgba(255,255,255,.12); --pb:#1f5fbf; --pb-soft:#dfeafb;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -41,6 +42,7 @@
     --danger:#f06565; --danger-soft:#3a1b1b;
     --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 8px 30px rgba(0,0,0,.6);
     --nav-bg:rgba(19,26,22,.86);
+    --pb-1:#1d4680; --kitchen:rgba(255,255,255,.08); --pb:#7aa9ff; --pb-soft:#1a2a45;
   }
 }
 :root[data-theme="dark"]{
@@ -50,6 +52,7 @@
   --court-1:#1e5e3e; --court-2:#184f34; --court-line:rgba(255,255,255,.45);
   --chip:#121a15EE; --chip-text:#e9f0eb; --danger:#f06565; --danger-soft:#3a1b1b;
   --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 8px 30px rgba(0,0,0,.6); --nav-bg:rgba(19,26,22,.86);
+  --pb-1:#1d4680; --kitchen:rgba(255,255,255,.08); --pb:#7aa9ff; --pb-soft:#1a2a45;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -185,6 +188,7 @@ textarea{width:100%;min-height:120px;border-radius:16px;border:1.5px solid var(-
 .quick .btn{flex:1}
 .court{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-radius:16px;
   background:repeating-linear-gradient(90deg,var(--court-1) 0 24px,var(--court-2) 24px 48px);padding:12px 8px;gap:16px}
+.court.pb{background:linear-gradient(90deg,transparent 33%,var(--kitchen) 33%,var(--kitchen) 67%,transparent 67%),var(--pb-1)}
 .court::before{content:"";position:absolute;inset:6px;border:2px solid var(--court-line);border-radius:10px;pointer-events:none}
 .court::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:3px;transform:translateX(-50%);
   background:repeating-linear-gradient(0deg,#fff 0 5px,rgba(255,255,255,.35) 5px 8px);box-shadow:0 0 6px rgba(0,0,0,.25)}
@@ -258,6 +262,27 @@ body.lobby{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .search input{height:46px}
 .lock{flex:none;width:32px;text-align:center;color:var(--muted);font-size:15px}
 .prow .x{flex:none;width:36px;height:36px;border-radius:10px;color:var(--muted)}
+/* môn chơi: phòng pickleball dùng tông xanh dương */
+body.pb{--brand:#1f5fbf;--brand-2:#2f7ae0;--brand-soft:#dfeafb;--grad:linear-gradient(135deg,#1d4fa3 0%,#2f7ae0 100%)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body.pb{--brand:#7aa9ff;--brand-2:#4f86e6;--brand-soft:#1a2a45}}
+:root[data-theme="dark"] body.pb{--brand:#7aa9ff;--brand-2:#4f86e6;--brand-soft:#1a2a45}
+body.pb .btn.primary{box-shadow:0 6px 18px rgba(31,95,191,.35)}
+/* môn chơi */
+.sp-ico{display:inline-grid;place-items:center;width:22px;height:22px;flex:none;vertical-align:middle}
+.sp-ico svg{width:100%;height:100%}
+.sp-badminton{color:var(--brand)} .sp-pickleball{color:var(--pb)}
+.sport{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sport button{border:1.5px solid var(--line);border-radius:16px;padding:12px;display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface)}
+.sport button .sp-ico{width:38px;height:38px;padding:7px;border-radius:12px;background:var(--surface-2)}
+.sport button b{display:block;font-size:14.5px}
+.sport button span.d{font-size:12px;color:var(--muted)}
+.sport button.on.badminton{border-color:var(--brand);background:var(--brand-soft)}
+.sport button.on.pickleball{border-color:var(--pb);background:var(--pb-soft)}
+.sport button.on .sp-ico{background:var(--surface)}
+.sp-tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 5px;border-radius:999px;font-size:11px;font-weight:700;width:max-content}
+.sp-tag .sp-ico{width:15px;height:15px}
+.sp-tag.badminton{background:var(--brand-soft);color:var(--brand)} .sp-tag.pickleball{background:var(--pb-soft);color:var(--pb)}
+.seg.sm button{height:34px;font-size:13px}
 /* thẻ phòng: lưới 2 cột */
 .rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .rgrid>.card{grid-column:1/-1}
@@ -269,13 +294,15 @@ body.lobby{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .rtop::before{content:"";position:absolute;inset:9px 12px;border:1.5px solid rgba(255,255,255,.4);border-radius:4px;
   background:linear-gradient(90deg,transparent calc(50% - 1px),rgba(255,255,255,.55) calc(50% - 1px),rgba(255,255,255,.55) calc(50% + 1px),transparent calc(50% + 1px)),
   linear-gradient(0deg,transparent 30%,rgba(255,255,255,.22) 30%,rgba(255,255,255,.22) calc(30% + 1px),transparent calc(30% + 1px),transparent 70%,rgba(255,255,255,.22) 70%,rgba(255,255,255,.22) calc(70% + 1px),transparent calc(70% + 1px))}
-.rtop .av{position:absolute;left:12px;bottom:-20px;--s:42px;border:3px solid var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.rtop .av{position:absolute;left:12px;bottom:-20px;--s:42px;border:3px solid var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.15);background:#fff!important}
+.rtop .av .sp-ico{width:24px;height:24px}
 .rtop .rbadge{position:absolute;right:8px;top:8px;height:24px;padding:0 9px;border-radius:999px;background:rgba(0,0,0,.28);color:#fff;
   font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .rbody{padding:26px 12px 12px;display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
 .rbody .nm{font-weight:700;font-size:14.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .rbody .meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rbody .go{margin-top:auto;padding-top:8px;font-size:12px;font-weight:700;color:var(--brand)}
+.rtap.pickleball .go{color:var(--pb)}
 .rx{position:absolute;right:6px;top:36px;width:28px;height:28px;border-radius:50%;background:var(--surface);color:var(--muted);
   box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:12px;display:grid;place-items:center;z-index:2}
 .rtap.busy::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--surface) 70%,transparent)}
@@ -407,7 +434,7 @@ let room = null; // phòng online đang vào: {id, name, key, admin, pw}
 const ctxKey = () => room ? 'badminton_room_' + room.id : KEY; // mỗi phòng 1 bản lưu riêng trên máy
 function loadState() {
   let st; try { st = Object.assign(defaultState(), JSON.parse(localStorage.getItem(ctxKey()) || '{}')); } catch (e) { st = defaultState(); }
-  st.settings = Object.assign({ courts: 2, mode: 'balanced', preview: 3, courtNames: [] }, st.settings);
+  st.settings = Object.assign({ courts: 2, mode: 'balanced', preview: 3, courtNames: [], sport: 'badminton' }, st.settings);
   st.session = Object.assign({ rounds: [], credit: {} }, st.session);
   return st;
 }
@@ -698,7 +725,7 @@ function editMatch(ri, ci) {
   openSheet(`<h3>Kết quả · Vòng ${r.no} · ${esc(cName(c, ci))}</h3>
     <p>Chạm đội thắng, hoặc nhập tỉ số (không bắt buộc).${r.done ? ' Thống kê sẽ được tính lại.' : ''}</p>
     <div class="res">${team('a')}<div class="res-vs">VS</div>${team('b')}</div>
-    <div class="quick">${[21, 15, 11].map(n => `<button class="btn sm" onclick="edQuick(${n})">Tới ${n}</button>`).join('')}</div>
+    <div class="quick">${SP().quick.map(n => `<button class="btn sm" onclick="edQuick(${n})">Tới ${n}</button>`).join('')}</div>
     <div class="row2"><button class="btn" onclick="edClear()">Xoá kết quả</button>
       <button class="btn primary" onclick="edSave()">Lưu</button></div>`);
   edPaint();
@@ -751,7 +778,7 @@ function tapSlot(ref) {
   selSlot = null; save(); render();
 }
 function roundText(r) {
-  const lines = [`🏸 Vòng ${r.no}`];
+  const lines = [`${SP().emoji} Vòng ${r.no}`];
   r.courts.forEach((c, i) => lines.push(`${cName(c, i)}: ${c.a.map(id => P(id).name).join(' & ')}  ${c.score ? c.score.join('–') : '⚔️'}  ${c.b.map(id => P(id).name).join(' & ')}`));
   if (r.resting.length) lines.push(`Nghỉ: ${r.resting.map(id => P(id).name).join(', ')}`);
   return lines.join('\n');
@@ -808,6 +835,29 @@ const ICON = {
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'
 };
 
+/* ================== MÔN CHƠI ================== */
+const SPORTS = {
+  badminton: { key: 'badminton', name: 'Cầu lông', emoji: '🏸', quick: [21, 15, 11], desc: 'Đánh tới 21',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(38 12 12)"><path d="M7.2 2.6 L16.8 2.6 L14.2 14 L9.8 14 Z" fill="currentColor" fill-opacity=".18"/><path d="M12 2.6 V14 M9.4 7.6 H14.6"/><path d="M9.8 14 H14.2 V15.6 A2.2 2.2 0 0 1 9.8 15.6 Z" fill="currentColor"/></g></svg>' },
+  pickleball: { key: 'pickleball', name: 'Pickleball', emoji: '🏓', quick: [11, 15, 21], desc: 'Đánh tới 11',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-32 9.5 11)"><rect x="3.8" y="1.6" width="11.4" height="12.6" rx="3.6" fill="currentColor" fill-opacity=".18"/><rect x="7.9" y="14.2" width="3.2" height="6.6" rx="1.2" fill="currentColor"/></g><circle cx="18.6" cy="18.2" r="3.3" fill="currentColor" fill-opacity=".18"/><circle cx="17.6" cy="17.3" r=".5" fill="currentColor" stroke="none"/><circle cx="19.7" cy="17.6" r=".5" fill="currentColor" stroke="none"/><circle cx="18.5" cy="19.4" r=".5" fill="currentColor" stroke="none"/></svg>' }
+};
+const sportOf = k => SPORTS[k] || SPORTS.badminton;
+const SP = () => sportOf(S.settings.sport);
+const spIco = k => `<span class="sp-ico sp-${sportOf(k).key}">${sportOf(k).icon}</span>`;
+const spTag = k => `<span class="sp-tag ${sportOf(k).key}">${spIco(k)}${sportOf(k).name}</span>`;
+function sportPicker(cur, fn) {
+  return `<div class="sport">${Object.values(SPORTS).map(sp => `<button class="${sp.key} ${cur === sp.key ? 'on' : ''}" onclick="${fn}('${sp.key}')">
+    ${spIco(sp.key)}<div><b>${sp.name}</b><span class="d">${sp.desc}</span></div></button>`).join('')}</div>`;
+}
+function setSport(k) {
+  if (!SPORTS[k] || S.settings.sport === k) return;
+  S.settings.sport = k; save(); render();
+  if (room && room.admin && FB) FB.update(dbRef('rooms/' + room.id), { sport: k }).catch(() => {}); // để danh sách phòng hiện đúng môn
+  if (document.getElementById('sheet').classList.contains('show')) openSettings();
+  toast(`Đã chuyển sang ${sportOf(k).name}`);
+}
+
 let toastT;
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
 
@@ -848,7 +898,7 @@ function renamePlayer(id) {
   closeSheet();
 }
 function openSettings() {
-  openSheet(`<h3>Cài đặt xếp sân</h3><p>Áp dụng từ lần xếp tiếp theo.</p>${settingsHtml()}
+  openSheet(`<h3>Cài đặt</h3><p>Áp dụng từ lần xếp tiếp theo.</p>${settingsHtml()}
     <div class="row2"><button class="btn" onclick="closeSheet()">Đóng</button>
     <button class="btn primary" onclick="closeSheet();generateRound();toast('Đã xếp lại theo cài đặt mới')">Xếp lại ngay</button></div>`);
 }
@@ -858,6 +908,7 @@ function settingsHtml() {
   const act = activePlayers().length, maxC = Math.max(1, Math.floor(act / 4));
   const used = Math.min(S.settings.courts, maxC), playing = used * 4, rest = Math.max(0, act - playing);
   return `
+    <div class="field"><label>Môn chơi</label>${sportPicker(SP().key, 'setSport')}</div>
     <div class="field"><label>Số sân thuê được hôm nay</label><div class="stepper">
       <button onclick="setCourts(${S.settings.courts - 1})" ${S.settings.courts <= 1 ? 'disabled' : ''} aria-label="Bớt sân">−</button>
       <div><b>${S.settings.courts}</b><span>sân</span></div>
@@ -876,7 +927,7 @@ function settingsHtml() {
 }
 
 /* ================== PHÒNG ONLINE (Firebase) ==================
- * rooms/<mã phòng>            {name, created}       công khai: danh sách phòng hiện có (không chứa dữ liệu)
+ * rooms/<mã phòng>            {name, created, sport} công khai: danh sách phòng hiện có (không chứa dữ liệu)
  * roomKeys/<mã phòng>         <khoá xem>            không ai đọc được; để Rules biết ai được xoá phòng
  * data/<SHA256(mã+mật khẩu)>  {s: JSON, t, by}      ai biết mật khẩu mới tính ra được địa chỉ này
  * adminKeys/<khoá xem>        SHA256(mã+mã quản lý) không ai đọc được
@@ -889,7 +940,7 @@ let roomStatus = 'connecting'; // connecting | online | offline
 let unsubRoom = null, lastRemote = '', pushT = null;
 // Sảnh phòng: màn hình đầu tiên khi mở web (nếu đã bật Firebase)
 let lobby = CLOUD_ON;
-let lobbyRooms = null, lobbyErr = '', lobbyQ = '', unsubRooms = null;
+let lobbyRooms = null, lobbyErr = '', lobbyQ = '', unsubRooms = null, lobbySport = 'all', newSport = null;
 const LS_RECENT = 'badminton_rooms_recent';
 
 async function sha256(s) {
@@ -952,7 +1003,7 @@ function pushNow() {
 }
 function applyRemote(obj) {
   S.players = obj.players || [];
-  S.settings = Object.assign({ courts: 2, mode: 'balanced', preview: 3 }, obj.settings);
+  S.settings = Object.assign({ courts: 2, mode: 'balanced', preview: 3, courtNames: [], sport: 'badminton' }, obj.settings);
   S.session = Object.assign({ rounds: [], credit: {} }, obj.session);
   try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {}
   selSlot = null;
@@ -972,14 +1023,16 @@ function subscribeRoom() {
     if (v.s === lastRemote) return;
     lastRemote = v.s;
     try { applyRemote(JSON.parse(v.s)); } catch (e) {}
+    if (room && room.sport !== SP().key) { room.sport = SP().key; rememberRoom(room); }
   }, e => toast('Lỗi đồng bộ: ' + cloudError(e)));
 }
 
 /* ---------- phòng gần đây (chỉ lưu trên máy này) ---------- */
 function recentRooms() { try { return JSON.parse(localStorage.getItem(LS_RECENT) || '[]'); } catch (e) { return []; } }
 function rememberRoom(r) {
+  const old0 = recentRooms().find(x => x.id === r.id);
   const list = recentRooms().filter(x => x.id !== r.id);
-  list.unshift({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '' });
+  list.unshift({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '', sport: r.sport || (old0 && old0.sport) || 'badminton' });
   try { localStorage.setItem(LS_RECENT, JSON.stringify(list.slice(0, 10))); } catch (e) {}
 }
 function forgetRoom(id) {
@@ -995,7 +1048,7 @@ function watchRooms() {
     const q = FB.query(dbRef('rooms'), FB.orderByChild('created'), FB.limitToLast(200));
     unsubRooms = FB.onValue(q, snap => {
       const list = [];
-      snap.forEach(c => { const v = c.val() || {}; list.push({ id: c.key, name: String(v.name || c.key), created: +v.created || 0 }); });
+      snap.forEach(c => { const v = c.val() || {}; list.push({ id: c.key, name: String(v.name || c.key), created: +v.created || 0, sport: sportOf(v.sport).key }); });
       lobbyRooms = list.sort((a, b) => b.created - a.created); lobbyErr = '';
       renderRoomList();
     }, e => {
@@ -1036,7 +1089,7 @@ async function openRoomByKey(id, key, pw) {
   if (!d.exists()) throw new Error('Sai mật khẩu');
   const adm = await FB.get(dbRef('admins/' + key + '/' + myUid)).catch(() => null);
   const old = recentRooms().find(x => x.id === id);
-  enterRoom({ id, name: r.val().name, key, admin: !!(adm && adm.exists()), pw: pw || (old && old.pw) || '' });
+  enterRoom({ id, name: r.val().name, key, admin: !!(adm && adm.exists()), pw: pw || (old && old.pw) || '', sport: sportOf(r.val().sport).key });
 }
 async function joinRoom(idRaw, pw) {
   const id = normId(idRaw);
@@ -1044,7 +1097,8 @@ async function joinRoom(idRaw, pw) {
   if (!pw) throw new Error('Nhập mật khẩu');
   await openRoomByKey(id, await viewKeyOf(id, pw), pw);
 }
-async function createRoom(name, idRaw, pw, code, copyLocal) {
+async function createRoom(name, idRaw, pw, code, copyLocal, sport) {
+  sport = sportOf(sport).key;
   const id = normId(idRaw);
   if (!name.trim()) throw new Error('Nhập tên nhóm');
   if (id.length < 3) throw new Error('Mã phòng cần ít nhất 3 ký tự (chữ, số, dấu -)');
@@ -1054,17 +1108,17 @@ async function createRoom(name, idRaw, pw, code, copyLocal) {
   await cloudInit();
   if ((await FB.get(dbRef('rooms/' + id))).exists()) throw new Error('Mã phòng "' + id + '" đã có người dùng, chọn mã khác');
   const key = await viewKeyOf(id, pw), ak = await adminKeyOf(id, code);
-  const init = copyLocal ? { players: S.players.map(p => ({ ...p })), settings: { ...S.settings }, session: { rounds: [], credit: {} } }
-                         : { players: [], settings: { courts: 2, mode: 'balanced', preview: 3 }, session: { rounds: [], credit: {} } };
+  const init = copyLocal ? { players: S.players.map(p => ({ ...p })), settings: { ...S.settings, sport }, session: { rounds: [], credit: {} } }
+                         : { players: [], settings: { courts: 2, mode: 'balanced', preview: 3, courtNames: [], sport }, session: { rounds: [], credit: {} } };
   const taken = () => new Error('Mã phòng "' + id + '" đã có người dùng, chọn mã khác');
   // thứ tự ghi quan trọng: Rules chỉ cho tạo rooms/<mã> khi đã là quản lý của phòng đó
   try { await FB.set(dbRef('roomKeys/' + id), key); } catch (e) { throw /permission/i.test(String(e.code || e.message)) ? taken() : e; }
   await FB.set(dbRef('adminKeys/' + key), ak);
   await FB.set(dbRef('admins/' + key + '/' + myUid), ak);
   await FB.set(dbRef('data/' + key), { s: JSON.stringify(init), t: FB.serverTimestamp(), by: myUid });
-  await FB.set(dbRef('rooms/' + id), { name: name.trim().slice(0, 40), created: FB.serverTimestamp() });
+  await FB.set(dbRef('rooms/' + id), { name: name.trim().slice(0, 40), created: FB.serverTimestamp(), sport });
   try { localStorage.setItem('badminton_room_' + id, JSON.stringify(Object.assign(defaultState(), init, { tab: 'players' }))); } catch (e) {}
-  enterRoom({ id, name: name.trim().slice(0, 40), key, admin: true, pw });
+  enterRoom({ id, name: name.trim().slice(0, 40), key, admin: true, pw, sport });
   toast('Đã tạo phòng 🎉 Bấm "Mời" để gửi cho cả nhóm');
 }
 async function unlockAdmin(code) {
@@ -1112,7 +1166,7 @@ function dropRoomLocal(id) {
 }
 function inviteLink() { return `${location.origin}${location.pathname}#r=${encodeURIComponent(room.id)}&k=${room.key}`; }
 function shareInvite() {
-  const lines = [`🏸 Mời vào phòng cầu lông "${room.name}"`, `👉 Bấm để xem lịch đánh: ${inviteLink()}`];
+  const lines = [`${SP().emoji} Mời vào phòng ${SP().name.toLowerCase()} "${room.name}"`, `👉 Bấm để xem lịch đánh: ${inviteLink()}`];
   lines.push('', `Hoặc mở ${location.origin}${location.pathname} → Phòng → Vào phòng`, `Mã phòng: ${room.id}` + (room.pw ? `\nMật khẩu: ${room.pw}` : ''));
   shareText(lines.join('\n'));
 }
@@ -1148,11 +1202,13 @@ function openRoomSheet() {
 const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
 const fmtDate = t => t ? new Date(t).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 function roomCard(r, mine) {
+  const live = (lobbyRooms || []).find(x => x.id === r.id), sp = sportOf((live || r).sport);
+  const h = (sp.key === 'pickleball' ? 196 : 138) + hue(r.name) % 34;
   const badge = mine ? (r.admin ? '✏️ Quản lý' : '👁 Đã vào') : '🔒';
   const meta = mine ? '#' + r.id : fmtDate(r.created) ? 'Tạo ' + fmtDate(r.created) : '#' + r.id;
-  return `<div class="rcard"><button class="rtap" style="--h:${hue(r.name)}" onclick="pickRoom(this,'${esc(r.id)}')">
-      <div class="rtop"><div class="av" style="background:hsl(${hue(r.name)} 55% 46%)">${esc((r.name.trim()[0] || '?'))}</div><span class="rbadge">${badge}</span></div>
-      <div class="rbody"><div class="nm">${esc(r.name)}</div><div class="meta">${esc(meta)}</div>
+  return `<div class="rcard"><button class="rtap ${sp.key}" style="--h:${h}" onclick="pickRoom(this,'${esc(r.id)}')">
+      <div class="rtop"><div class="av">${spIco(sp.key)}</div><span class="rbadge">${badge}</span></div>
+      <div class="rbody"><div class="nm">${esc(r.name)}</div><div class="meta">${esc(meta)}</div>${spTag(sp.key)}
         <div class="go">${mine ? 'Vào ngay →' : 'Nhập mật khẩu →'}</div></div></button>
     ${mine ? `<button class="rx" onclick="forgetRoom('${esc(r.id)}')" aria-label="Bỏ khỏi danh sách của bạn">✕</button>` : ''}</div>`;
 }
@@ -1165,6 +1221,8 @@ function viewLobby() {
     ${rec.length ? `<div class="sec-title"><h2>Phòng của bạn · ${rec.length}</h2></div>
       <div class="rgrid">${rec.map(r => roomCard(r, true)).join('')}</div>` : ''}
     <div class="sec-title"><h2>Phòng hiện có <span id="roomCount"></span></h2></div>
+    <div class="seg sm" style="margin-bottom:10px">${[['all', 'Tất cả'], ['badminton', '🏸 Cầu lông'], ['pickleball', '🏓 Pickleball']].map(([k, l]) =>
+      `<button class="${lobbySport === k ? 'on' : ''}" onclick="lobbySport='${k}';render()">${l}</button>`).join('')}</div>
     <div class="add-row search"><input id="lobbyQ" type="search" placeholder="🔍 Tìm theo tên nhóm hoặc mã phòng" autocomplete="off"
       value="${esc(lobbyQ)}" oninput="lobbyQ=this.value;renderRoomList()"></div>
     <div id="roomList" style="margin-top:12px"></div>
@@ -1181,9 +1239,9 @@ function renderRoomList() {
   const others = lobbyRooms.filter(r => !mine.has(r.id));
   if (cnt) cnt.textContent = others.length ? '· ' + others.length : '';
   const q = fold(lobbyQ.trim());
-  const list = q ? others.filter(r => fold(r.name).includes(q) || r.id.includes(q)) : others;
+  const list = others.filter(r => (lobbySport === 'all' || r.sport === lobbySport) && (!q || fold(r.name).includes(q) || r.id.includes(q)));
   el.innerHTML = list.length ? `<div class="rgrid">${list.map(r => roomCard(r, false)).join('')}</div>`
-    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : !lobbyRooms.length ? '🏸 Chưa có phòng nào — bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
+    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : lobbySport !== 'all' && others.length ? `Chưa có phòng ${sportOf(lobbySport).name} nào — bấm <b>Tạo phòng</b> để mở phòng đầu tiên` : !lobbyRooms.length ? '🏸🏓 Chưa có phòng nào — bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
   renderLobbyStats();
 }
 function renderLobbyStats() {
@@ -1193,10 +1251,16 @@ function renderLobbyStats() {
     <div class="pill"><i class="dot ${roomStatus}"></i><span>${roomStatus === 'online' ? 'trực tuyến' : roomStatus === 'offline' ? 'mất mạng' : 'đang nối…'}</span></div>`;
 }
 function suggestId(name) { return (normId(name).slice(0, 20) || 'nhom') + '-' + (100 + Math.floor(Math.random() * 900)); }
+function pickNewSport(k) {
+  newSport = k;
+  document.querySelectorAll('#newSport .sport button').forEach(b => b.classList.toggle('on', b.classList.contains(k)));
+}
 function openCreate() {
   const has = S.players.length > 0 && !room;
+  newSport = lobbySport !== 'all' ? lobbySport : SP().key;
   openSheet(`<h3>➕ Tạo phòng mới</h3><p>Bạn sẽ là người quản lý phòng.</p>
-    <div class="field"><label>Tên nhóm</label><input type="text" id="rName" maxlength="40" placeholder="VD: Cầu lông Thứ 7"
+    <div class="field" id="newSport"><label>Môn chơi</label>${sportPicker(newSport, 'pickNewSport')}</div>
+    <div class="field"><label>Tên nhóm</label><input type="text" id="rName" maxlength="40" placeholder="VD: Nhóm Thứ 7 sân Cầu Giấy"
       oninput="if(!this.dataset.t){document.getElementById('rId').value=suggestId(this.value)}" data-t=""></div>
     <div class="field"><label>Mã phòng <span class="hint-i">— để mọi người tìm phòng</span></label>
       <input type="text" id="rId" maxlength="30" placeholder="vd: caulong-t7-123" autocapitalize="off" oninput="document.getElementById('rName').dataset.t='1'"></div>
@@ -1206,7 +1270,7 @@ function openCreate() {
       <input type="text" id="rAdm" maxlength="40" placeholder="ít nhất 4 ký tự, khác mật khẩu" autocapitalize="off" autocomplete="off"></div>
     ${has ? `<label class="check"><input type="checkbox" id="rCopy" checked> Dùng danh sách ${S.players.length} người chơi đang có trên máy</label>` : ''}
     <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
-      <button class="btn primary" onclick="runBusy(this,()=>createRoom(v('rName'),v('rId'),v('rPw'),v('rAdm'),!!(document.getElementById('rCopy')||{}).checked))">Tạo phòng</button></div>
+      <button class="btn primary" onclick="runBusy(this,()=>createRoom(v('rName'),v('rId'),v('rPw'),v('rAdm'),!!(document.getElementById('rCopy')||{}).checked,newSport))">Tạo phòng</button></div>
     <p class="small" style="margin:12px 0 0">⚠️ Hãy ghi nhớ mật khẩu và mã quản lý — không thể khôi phục nếu quên.</p>`);
 }
 const v = id => (document.getElementById(id) || { value: '' }).value.trim();
@@ -1251,6 +1315,8 @@ function bootCloud() {
 /* ================== RENDER ================== */
 function render() {
   document.body.classList.toggle('lobby', lobby);
+  document.body.classList.toggle('pb', !lobby && SP().key === 'pickleball');
+  const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = !lobby && SP().key === 'pickleball' ? '#1d4fa3' : '#0e7a57';
   document.getElementById('nav').hidden = lobby;
   if (lobby) {
     renderHero();
@@ -1283,15 +1349,15 @@ function renderHero() {
   if (lobby) {
     document.getElementById('hero').innerHTML = `
       <div class="hero-top"><div class="logo img"><img src="icons/favicon.svg" alt=""></div>
-        <div class="ht"><h1>Xếp Sân Cầu Lông</h1><div class="rsub">Chọn phòng của nhóm bạn hoặc tạo phòng mới</div></div></div>
+        <div class="ht"><h1>Xếp Sân</h1><div class="rsub">Cầu lông · Pickleball — chọn phòng hoặc tạo phòng mới</div></div></div>
       <div class="pills" id="lobbyStats"></div>`;
     renderLobbyStats();
     return;
   }
   document.getElementById('hero').innerHTML = `
     <div class="hero-top"><div class="logo img"><img src="icons/favicon.svg" alt=""></div>
-      <div class="ht"><h1>${room ? esc(room.name) : 'Xếp Sân Cầu Lông'}</h1>
-        ${room ? `<div class="rsub"><i class="dot ${roomStatus}"></i>${room.admin ? '✏️ Quản lý' : '👁 Chỉ xem'} · #${esc(room.id)}</div>` : ''}</div>
+      <div class="ht"><h1>${room ? esc(room.name) : 'Xếp Sân'}</h1>
+        <div class="rsub">${room ? `<i class="dot ${roomStatus}"></i>${room.admin ? '✏️ Quản lý' : '👁 Chỉ xem'} · ` : ''}${SP().emoji} ${SP().name}${room ? ` · #${esc(room.id)}` : ' · dùng trên máy này'}</div></div>
       <button class="room-btn" onclick="openRoomSheet()">${room ? '👥 Phòng' : CLOUD_ON ? '☁️ Các phòng' : '☁️ Phòng'}</button></div>
     <div class="pills">
       <div class="pill"><b>${act}</b><span>có mặt</span></div>
@@ -1356,7 +1422,7 @@ function chip(id, ref, team) {
 
 function viewPlay() {
   const act = activePlayers().length, r = curRound();
-  if (act < 4) return `<div class="card empty"><div class="big">🏸</div><h3>Cần ít nhất 4 người</h3>
+  if (act < 4) return `<div class="card empty"><div class="big">${SP().emoji}</div><h3>Cần ít nhất 4 người</h3>
       <p>Hiện có ${act} người có mặt. Thêm người chơi hoặc bật "có mặt".</p>
       <button class="btn primary" onclick="goTab('players')">Đến danh sách người chơi</button></div>`;
   if (!r && !canEdit()) return `<div class="card empty"><div class="big">⏳</div><h3>Chờ người quản lý xếp sân</h3>
@@ -1377,7 +1443,7 @@ function viewPlay() {
     return `<div class="court-card ${animNext ? 'anim' : ''}" style="--d:${ci * 70}ms">
       <div class="court-head"><${canEdit() ? `button onclick="openCourt(${ci})" aria-label="Sửa sân"` : 'div'} class="court-no"><i>${ci + 1}</i><div>${esc(cName(c, ci))}${canEdit() ? ` <span class="pen">${ICON.edit}</span>` : ''}${bal ? `<span class="court-sum">Trình ${sum('a')} – ${sum('b')}</span>` : ''}</div></${canEdit() ? 'button' : 'div'}>
         ${canEdit() || c.score ? `<button class="score-btn ${c.score ? 'has' : ''}" onclick="editMatch(${S.session.rounds.length - 1},${ci})">${c.score ? c.score.join(' – ') : `${ICON.edit} Tỉ số`}</button>` : ''}</div>
-      <div class="court">${half('a')}<div class="vs">VS</div>${half('b')}</div>
+      <div class="court ${SP().key === 'pickleball' ? 'pb' : ''}">${half('a')}<div class="vs">VS</div>${half('b')}</div>
     </div>`;
   }).join('');
   const rest = r.resting.length ? `<div class="rest-card ${animNext ? 'anim' : ''}" style="--d:${r.courts.length * 70}ms">
@@ -1405,7 +1471,7 @@ function upcomingHtml(r) {
     const plays = all.filter(rd => rd.courts.some(c => [...c.a, ...c.b].includes(focusId))).map(rd => rd.no);
     const rests = all.filter(rd => rd.resting.includes(focusId)).map(rd => rd.no);
     focus = `<div class="focus">${avatar(P(focusId), 'sm')}<div style="flex:1;min-width:0"><b>${esc(P(focusId).name)}</b>
-      <div class="small">🏸 Đánh: ${plays.length ? 'vòng ' + plays.join(', ') : '—'}${rests.length ? ` · ☕ Nghỉ: vòng ${rests.join(', ')}` : ''}</div></div>
+      <div class="small">${SP().emoji} Đánh: ${plays.length ? 'vòng ' + plays.join(', ') : '—'}${rests.length ? ` · ☕ Nghỉ: vòng ${rests.join(', ')}` : ''}</div></div>
       <button class="x" onclick="focusP('${focusId}')" aria-label="Bỏ chọn">✕</button></div>`;
   }
   const cards = plan.map(rd => `

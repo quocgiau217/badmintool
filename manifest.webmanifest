@@ -1,7 +1,7 @@
 {
-  "name": "Xếp Sân Cầu Lông",
+  "name": "Xếp Sân · Cầu lông & Pickleball",
   "short_name": "Xếp Sân",
-  "description": "Xếp cặp đánh đôi cầu lông cho nhóm, chia sân và vòng đấu tự động.",
+  "description": "Xếp cặp đánh đôi cầu lông và pickleball cho nhóm, chia sân và vòng đấu tự động.",
   "lang": "vi",
   "start_url": "./",
   "scope": "./",
@@ -9,8 +9,23 @@
   "background_color": "#0e7a57",
   "theme_color": "#0e7a57",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

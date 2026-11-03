@@ -1,8 +1,9 @@
-# 🏸 Xếp Sân Cầu Lông
+# 🏸🏓 Xếp Sân · Cầu lông & Pickleball
 
-Web app chạy trên điện thoại để xếp cặp đánh đôi cho nhóm 4–20 người. Chỉ 1 file `index.html`, không cần server, dữ liệu lưu ngay trên máy (localStorage).
+Web app chạy trên điện thoại để xếp cặp đánh đôi **cầu lông** hoặc **pickleball** cho nhóm 4–20 người. Chỉ 1 file `index.html`, không cần server, dữ liệu lưu ngay trên máy (localStorage).
 
 ## Tính năng
+- **2 môn: Cầu lông và Pickleball**: mỗi phòng chọn 1 môn khi tạo (đổi được trong ⚙️ Cài đặt). Theo môn sẽ đổi: màu sân (pickleball xanh dương, có vùng bếp/kitchen gần lưới), nút điểm nhanh (cầu lông tới 21, pickleball tới 11), biểu tượng và tin nhắn gửi nhóm. Danh sách phòng lọc được theo môn.
 - **Danh sách người chơi**: thêm nhanh nhiều tên (dán từ Zalo, mỗi dòng 1 tên), tích ✓ người có mặt hôm nay, chấm trình độ 1–5.
 - **Xếp sân tự động** theo vòng, 1–5 sân:
   - Ai chơi ít trận hơn được ưu tiên vào sân → số trận đều nhau, không ai nghỉ 2 vòng liền (nếu có thể).
@@ -41,7 +42,7 @@ Không bật thì app vẫn chạy bình thường, dữ liệu chỉ lưu trên
 6. Mở file [`config.js`](config.js), thay `window.FIREBASE_CONFIG = null;` bằng config vừa copy (nhớ có dòng `databaseURL`). Commit & push.
 7. Mở trang → màn hình danh sách phòng → **Tạo phòng**.
 
-> Đã dán Rules từ bản cũ? Hãy dán lại **toàn bộ** nội dung mới của `database.rules.json` và **Publish** — bản mới cho phép xem danh sách phòng và xoá phòng. Phòng tạo bằng bản cũ không xoá được trong app, hãy xoá trong Firebase Console (tab Data).
+> Đã dán Rules từ bản cũ? Hãy dán lại **toàn bộ** nội dung mới của `database.rules.json` và **Publish** — bản mới cho phép xem danh sách phòng, xoá phòng và đổi môn của phòng. Phòng tạo bằng bản cũ không xoá được trong app, hãy xoá trong Firebase Console (tab Data).
 
 ### Bảo mật hoạt động thế nào
 - Danh sách phòng (chỉ gồm **tên nhóm, mã phòng, ngày tạo**) là công khai để mọi người tìm phòng.

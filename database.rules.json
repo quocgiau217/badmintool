@@ -6,8 +6,20 @@
         "created"
       ],
       "$id": {
-        ".write": "auth != null && root.child('roomKeys').child($id).exists() && root.child('admins').child(root.child('roomKeys').child($id).val()).child(auth.uid).exists() && (!data.exists() || !newData.exists())",
-        ".validate": "$id.matches(/^[a-z0-9-]{3,30}$/) && newData.hasChildren(['name', 'created']) && newData.child('name').isString() && newData.child('name').val().length <= 40"
+        ".write": "auth != null && root.child('roomKeys').child($id).exists() && root.child('admins').child(root.child('roomKeys').child($id).val()).child(auth.uid).exists()",
+        ".validate": "$id.matches(/^[a-z0-9-]{3,30}$/) && newData.hasChildren(['name', 'created'])",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+        },
+        "created": {
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+        },
+        "sport": {
+          ".validate": "newData.val() === 'badminton' || newData.val() === 'pickleball'"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "roomKeys": {

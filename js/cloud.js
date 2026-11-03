@@ -45,8 +45,8 @@ function cloudInit() {
     fbDb = FB.getDatabase(app);
     const emu = window.__FB_EMU;
     if (emu) { FB.connectAuthEmulator(auth, `http://${emu.host}:${emu.authPort}`, { disableWarnings: true }); FB.connectDatabaseEmulator(fbDb, emu.host, emu.dbPort); }
-    const cred = await FB.signInAnonymously(auth);
-    myUid = cred.user.uid;
+    if (auth.authStateReady) await auth.authStateReady();
+    myUid = auth.currentUser ? auth.currentUser.uid : (await FB.signInAnonymously(auth)).user.uid;
     FB.onValue(dbRef('.info/connected'), s => { roomStatus = s.val() ? 'online' : 'offline'; lobby ? renderLobbyStats() : renderHero(); });
   })();
   cloudReady.catch(() => { cloudReady = null; });
@@ -77,10 +77,10 @@ function pushNow() {
     return { s, t: Date.now(), by: myUid, v: base + 1 };
   }, { applyLocally: false }).then(res => {
     if (!room || room.key !== key) return;
-    if (res.committed) { remoteV = base + 1; lastRemote = s; return; }
+    if (res.committed) { remoteV = base + 1; lastRemote = s; storeV(); return; }
     const v = res.snapshot.val();
     if (v && typeof v.s === 'string') {
-      remoteV = v.v || 0; lastRemote = v.s; applyRemoteStr(v.s);
+      remoteV = v.v || 0; lastRemote = v.s; storeV(); applyRemoteStr(v.s);
       toast('⚠️ Người quản lý khác vừa cập nhật — đã tải bản mới nhất, hãy thao tác lại');
     }
   }).catch(e => {
@@ -91,6 +91,10 @@ function pushNow() {
     if (pushAgain) { pushAgain = false; schedulePush(); }
   });
 }
+// phiên bản dữ liệu phòng mà máy này đã đồng bộ lần cuối (để nhận ra thay đổi lúc mất mạng)
+const vKey = () => 'badminton_room_v_' + (room && room.id);
+const seenV = () => { try { const x = localStorage.getItem(vKey()); return x == null ? -1 : +x; } catch (e) { return -1; } };
+const storeV = () => { try { localStorage.setItem(vKey(), String(remoteV)); } catch (e) {} };
 function applyRemoteStr(s) {
   let obj; try { obj = JSON.parse(s); } catch (e) { return false; }
   const clean = sanitizeState(obj);
@@ -103,7 +107,7 @@ function applyRemoteStr(s) {
 function subscribeRoom() {
   if (unsubRoom) unsubRoom();
   const key = room.key;
-  remoteV = 0; roomSynced = false; pushAgain = false;
+  remoteV = 0; roomSynced = false;
   unsubRoom = FB.onValue(dbRef('data/' + key), snap => {
     if (!room || room.key !== key) return;
     const v = snap.val();
@@ -115,11 +119,18 @@ function subscribeRoom() {
     if (typeof v.s !== 'string') return;
     remoteV = v.v || 0;
     const first = !roomSynced; roomSynced = true;
-    if (v.s === lastRemote || v.s === pendingS) { lastRemote = v.s; return; } // chính mình vừa ghi
-    lastRemote = v.s;
+    if (v.s === lastRemote || v.s === pendingS) { lastRemote = v.s; storeV(); return; } // chính mình vừa ghi
+    if (first && room.admin && JSON.stringify(syncPart()) !== v.s && seenV() === remoteV) {
+      // máy chủ vẫn là bản mình đã thấy -> phần khác là do mình sửa khi mất mạng: đẩy lên
+      lastRemote = v.s; pushAgain = false; schedulePush();
+      toast('☁️ Đang đưa các thay đổi lúc mất mạng lên phòng');
+      return;
+    }
+    if (first && pushAgain && seenV() >= 0 && seenV() !== remoteV && JSON.stringify(syncPart()) !== v.s) toast('⚠️ Phòng đã được cập nhật ở máy khác — đã tải bản mới nhất');
+    pushAgain = false;
+    lastRemote = v.s; storeV();
     applyRemoteStr(v.s);
     if (room && room.sport !== SP().key) { room.sport = SP().key; rememberRoom(room); }
-    if (first && pushAgain) { pushAgain = false; schedulePush(); }
   }, e => toast('Lỗi đồng bộ: ' + cloudError(e)));
 }
 
@@ -162,7 +173,10 @@ function goLocal() { haptic(); stopWatchRooms(); lobby = false; S = loadState();
 function pickRoom(btn, id) {
   haptic();
   const r = recentRooms().find(x => x.id === id);
-  if (r && r.key) return runBusy(btn, () => openRoomByKey(id, r.key));
+  if (r && r.key) {
+    if (navigator.onLine === false) return openRoomOffline(r);
+    return runBusy(btn, () => withTimeout(openRoomByKey(id, r.key), 8000).catch(e => { if (isNetErr(e) && room === null) openRoomOffline(r); else throw e; }));
+  }
   const info = (lobbyRooms || []).find(x => x.id === id);
   openJoin(id, info && info.name);
 }
@@ -174,9 +188,20 @@ function enterRoom(info) {
   const tab = S.tab;
   S = loadState(); S.tab = tab === 'players' && !room.admin ? 'play' : tab;
   lastRemote = ''; selSlot = null; focusId = null;
-  subscribeRoom();
+  remoteV = 0; roomSynced = false; pushAgain = false;
+  const id = room.id;
+  cloudInit().then(() => { if (room && room.id === id) subscribeRoom(); })
+    .catch(() => { roomStatus = 'offline'; renderHero(); window.addEventListener('online', () => { if (room && room.id === id && !unsubRoom) enterRoomSync(); }, { once: true }); });
   closeSheet(); render(); window.scrollTo(0, 0);
 }
+function enterRoomSync() { cloudInit().then(() => { if (room && !unsubRoom) subscribeRoom(); }).catch(() => {}); }
+// mất mạng: vẫn mở được phòng đã vào trên máy này, dùng dữ liệu đã lưu; có mạng lại sẽ tự đồng bộ
+function openRoomOffline(r) {
+  enterRoom({ id: r.id, name: r.name, key: r.key, admin: !!r.admin, pw: r.pw || '', sport: r.sport });
+  toast('📴 Đang mất mạng — dùng dữ liệu đã lưu, có mạng sẽ tự đồng bộ');
+}
+const isNetErr = e => /network|offline|unavailable|fetch|timeout/i.test(String(e && (e.code || e.message)));
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 async function openRoomByKey(id, key, pw) {
   await cloudInit();
   const r = await FB.get(dbRef('rooms/' + id));
@@ -258,7 +283,7 @@ async function deleteRoom() {
   closeSheet(); render(); window.scrollTo(0, 0); toast('Đã xoá phòng');
 }
 function dropRoomLocal(id) {
-  try { localStorage.setItem(LS_RECENT, JSON.stringify(recentRooms().filter(x => x.id !== id))); localStorage.removeItem('badminton_room_' + id); } catch (e) {}
+  try { localStorage.setItem(LS_RECENT, JSON.stringify(recentRooms().filter(x => x.id !== id))); localStorage.removeItem('badminton_room_' + id); localStorage.removeItem('badminton_room_v_' + id); } catch (e) {}
 }
 function inviteLink() { return `${location.origin}${location.pathname}#r=${encodeURIComponent(room.id)}&k=${room.key}`; }
 function shareInvite() {

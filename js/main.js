@@ -11,3 +11,7 @@
 
 render();
 bootCloud();
+
+// Cho phép mở app khi mất mạng
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.__NO_SW)
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

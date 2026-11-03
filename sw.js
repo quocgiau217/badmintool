@@ -5,7 +5,7 @@
 const CACHE = 'xepsan-v1';
 const SHELL = [
   './', 'index.html', 'config.js', 'manifest.webmanifest', 'css/app.css', 'css/icons.css',
-  'js/state.js', 'js/algo.js', 'js/rating.js', 'js/actions.js', 'js/ui.js', 'js/money.js', 'js/me.js', 'js/tour.js', 'js/shareimg.js', 'js/cloud.js', 'js/roomadmin.js', 'js/views.js', 'js/undo.js', 'js/main.js',
+  'js/state.js', 'js/algo.js', 'js/rating.js', 'js/actions.js', 'js/ui.js', 'js/money.js', 'js/me.js', 'js/tour.js', 'js/shareimg.js', 'js/merge.js', 'js/cloud.js', 'js/roomadmin.js', 'js/views.js', 'js/undo.js', 'js/main.js',
   'icons/favicon.svg', 'icons/favicon-32.png', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 const LONG_LIVED = /^https:\/\/(www\.gstatic\.com\/firebasejs\/|fonts\.googleapis\.com\/|fonts\.gstatic\.com\/|img\.vietqr\.io\/)/;

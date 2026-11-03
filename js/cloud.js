@@ -94,8 +94,11 @@ function pushNow() {
     if (res.committed) { remoteV = base + 1; lastRemote = s; storeV(); return; }
     const v = res.snapshot.val();
     if (v && typeof v.s === 'string') {
-      remoteV = v.v || 0; lastRemote = v.s; storeV(); applyRemoteStr(v.s);
-      toast('Người quản lý khác vừa cập nhật. Đã tải bản mới nhất, hãy thao tác lại', 'warn');
+      // máy khác vừa ghi: gộp thay đổi của mình (so với bản gốc) vào bản mới rồi ghi lại
+      const prev = lastRemote, n = prev ? mergeInto(prev, v.s) : (applyRemoteStr(v.s), -1);
+      remoteV = v.v || 0; lastRemote = v.s; storeV();
+      if (n >= 0) { pushAgain = true; toast(n ? `Đã gộp với thay đổi của quản lý khác (${n} chỗ cùng sửa: giữ bản trên phòng)` : 'Đã gộp với thay đổi của quản lý khác', n ? 'warn' : undefined); }
+      else toast('Người quản lý khác vừa cập nhật. Đã tải bản mới nhất, hãy thao tác lại', 'warn');
     }
   }).catch(e => {
     if (/permission/i.test(String(e && (e.code || e.message)))) { room.admin = false; rememberRoom(room); render(); toast('Mất quyền quản lý. Hãy nhập lại mã quản lý'); }
@@ -108,7 +111,20 @@ function pushNow() {
 // phiên bản dữ liệu phòng mà máy này đã đồng bộ lần cuối (để nhận ra thay đổi lúc mất mạng)
 const vKey = () => 'badminton_room_v_' + (room && room.id);
 const seenV = () => { try { const x = localStorage.getItem(vKey()); return x == null ? -1 : +x; } catch (e) { return -1; } };
-const storeV = () => { try { localStorage.setItem(vKey(), String(remoteV)); } catch (e) {} };
+const storeV = () => { try { localStorage.setItem(vKey(), String(remoteV)); if (lastRemote) localStorage.setItem(baseKey(), lastRemote); } catch (e) {} };
+// bản gốc: dữ liệu phòng ở lần đồng bộ cuối, dùng để gộp 3 chiều
+const baseKey = () => 'badminton_room_base_' + (room && room.id);
+const getBase = () => { try { return localStorage.getItem(baseKey()) || ''; } catch (e) { return ''; } };
+// gộp (gốc, trên máy, máy chủ) vào S; trả về số chỗ hai bên cùng sửa
+function mergeInto(baseStr, remoteStr) {
+  const clean = x => sanitizeState(JSON.parse(x));
+  const { state, conflicts } = mergeStates(clean(baseStr), clean(JSON.stringify(syncPart())), clean(remoteStr));
+  const m = sanitizeState(state);
+  S.players = m.players; S.settings = m.settings; S.session = m.session; S.archive = m.archive;
+  try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {}
+  selSlot = null; R_CACHE = null; applyCheckins(); render();
+  return conflicts;
+}
 function applyRemoteStr(s) {
   let obj; try { obj = JSON.parse(s); } catch (e) { return false; }
   const clean = sanitizeState(obj);
@@ -145,13 +161,29 @@ function subscribeRoom() {
     remoteV = v.v || 0;
     const first = !roomSynced; roomSynced = true;
     if (v.s === lastRemote || v.s === pendingS) { lastRemote = v.s; storeV(); return; } // chính mình vừa ghi
+    if (!first && room.admin && lastRemote && JSON.stringify(syncPart()) !== lastRemote) {
+      // trên máy còn thay đổi chưa lên phòng (đang ghi, chờ gửi, hoặc lúc mất mạng): gộp thay vì ghi đè
+      const n = mergeInto(lastRemote, v.s);
+      lastRemote = v.s; storeV();
+      if (pushing) pushAgain = true; else schedulePush();
+      if (n) toast(`Đã gộp với thay đổi của quản lý khác (${n} chỗ cùng sửa: giữ bản trên phòng)`, 'warn');
+      return;
+    }
     if (first && room.admin && JSON.stringify(syncPart()) !== v.s && seenV() === remoteV) {
       // máy chủ vẫn là bản mình đã thấy -> phần khác là do mình sửa khi mất mạng: đẩy lên
       lastRemote = v.s; pushAgain = false; schedulePush();
       toast('Đang đưa các thay đổi lúc mất mạng lên phòng');
       return;
     }
-    if (first && pushAgain && seenV() >= 0 && seenV() !== remoteV && JSON.stringify(syncPart()) !== v.s) toast('Phòng đã được cập nhật ở máy khác. Đã tải bản mới nhất', 'warn');
+    const base = getBase(), mine = JSON.stringify(syncPart());
+    if (first && room.admin && mine !== v.s && base && mine !== base) {
+      // cả máy này (lúc mất mạng) và máy khác đều đã sửa: gộp rồi đưa lên
+      const n = mergeInto(base, v.s);
+      lastRemote = v.s; storeV(); pushAgain = false; schedulePush();
+      toast(n ? `Đã gộp thay đổi lúc mất mạng với bản mới trên phòng (${n} chỗ cùng sửa: giữ bản trên phòng)` : 'Đã gộp thay đổi lúc mất mạng với bản mới trên phòng', n ? 'warn' : undefined);
+      return;
+    }
+    if (first && pushAgain && seenV() >= 0 && seenV() !== remoteV && mine !== v.s) toast('Phòng đã được cập nhật ở máy khác. Đã tải bản mới nhất', 'warn');
     pushAgain = false;
     lastRemote = v.s; storeV();
     applyRemoteStr(v.s);
@@ -310,7 +342,7 @@ async function deleteRoom() {
   closeSheet(); render(); window.scrollTo(0, 0); toast('Đã xoá phòng');
 }
 function dropRoomLocal(id) {
-  try { localStorage.setItem(LS_RECENT, JSON.stringify(recentRooms().filter(x => x.id !== id))); localStorage.removeItem('badminton_room_' + id); localStorage.removeItem('badminton_room_v_' + id); } catch (e) {}
+  try { localStorage.setItem(LS_RECENT, JSON.stringify(recentRooms().filter(x => x.id !== id))); localStorage.removeItem('badminton_room_' + id); localStorage.removeItem('badminton_room_v_' + id); localStorage.removeItem('badminton_room_base_' + id); } catch (e) {}
 }
 function inviteLink() { return `${location.origin}${location.pathname}#r=${encodeURIComponent(room.id)}&k=${room.key}`; }
 function shareInvite() {

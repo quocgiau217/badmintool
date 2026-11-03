@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const FILES = ['state.js', 'algo.js', 'rating.js', 'actions.js', 'money.js', 'me.js', 'tour.js', 'undo.js', 'merge.js'];
+const FILES = ['state.js', 'algo.js', 'rating.js', 'actions.js', 'money.js', 'me.js', 'tour.js', 'undo.js', 'merge.js', 'event.js'];
 
 function loadApp() {
   const store = new Map();
@@ -24,6 +24,7 @@ function loadApp() {
   defaultState, buildRound, bestArrangement, computeStats, generateRound, finishRound, giveCredit, addPlayers,
   togglePlayer, addCourt, removeCourt, activePlayers, curRound, ensurePlan, pairKey, P, uid, sanitize: sanitizeState,
   parseMoney, moneyBill, saveCost, setMoneyMode, toggleExclude, togglePaid,
+  evDefaults, evMakeTeams, evMakeGroups, rrPairs, gameValid, matchFromGames, evAllMatches, evStandings, evQualifiers, evSchedule, evCourtState, evFinished, evTeamSkill, gName,
   mergeStates, undoable, undoLast, tourMatches, tourSchedule, koThird, finishCourt, syncQueue, makeTeams, rrRounds, rrTable, koRounds, tourCourts, seedOrder, ratingsNow, closeSession, aggregate, bestPairs, sessionPairs, lvOf, setLevel, newSession, setWinner,
 };`, ctx, { filename: 'app-bundle.js' });
   return ctx.app;

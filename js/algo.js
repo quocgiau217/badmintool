@@ -143,7 +143,7 @@ function openCourt(ci) {
   openSheet(`<h3>${esc(cName(c, ci))}</h3><p>Đổi tên cho đúng số sân ở nhà thi đấu, hoặc bỏ sân nếu bị lấy mất.</p>
     <div class="field"><label>Tên sân</label><input type="text" id="cName" maxlength="20" value="${esc(((S.settings.courtNames || [])[ci] || '').trim())}" placeholder="Sân ${ci + 1}"
       onkeydown="if(event.key==='Enter'){event.preventDefault();setCourtName(${ci},this.value);closeSheet()}"></div>
-    ${r.courts.length > 1 ? `<button class="btn danger block" onclick="removeCourt(${ci})">➖ Bỏ sân này khỏi vòng ${r.no}</button>
+    ${r.courts.length > 1 ? `<button class="btn danger block" onclick="removeCourt(${ci})"><i class="i i-minus"></i> Bỏ sân này khỏi vòng ${r.no}</button>
       <p class="small" style="margin:8px 2px 0">${perCourt()} người trên sân sẽ chuyển sang nghỉ, các vòng sau xếp với ${r.courts.length - 1} sân.</p>` : ''}
     <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
       <button class="btn primary" onclick="setCourtName(${ci},v('cName'));closeSheet();toast('Đã đổi tên sân')">Lưu</button></div>`);

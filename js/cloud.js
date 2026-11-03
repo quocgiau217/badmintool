@@ -287,7 +287,7 @@ function leaveRoom() {
 // Xoá hẳn phòng trên máy chủ (chỉ quản lý) — mọi người trong phòng sẽ bị đưa về danh sách phòng
 function openDeleteRoom() {
   if (!isMain()) return toast('Chỉ quản lý chính được xoá phòng');
-  openSheet(`<h3>🗑️ Xoá phòng "${esc(room.name)}"?</h3>
+  openSheet(`<h3><i class="i i-trash"></i> Xoá phòng "${esc(room.name)}"?</h3>
     <p>Toàn bộ người chơi, lịch và kết quả của phòng sẽ bị <b>xoá vĩnh viễn</b> với tất cả mọi người. Không thể hoàn tác.</p>
     <div class="field"><label>Gõ mã phòng <b>${esc(room.id)}</b> để xác nhận</label>
       <input type="text" id="delId" maxlength="30" autocapitalize="off" autocomplete="off" placeholder="${esc(room.id)}"></div>
@@ -323,32 +323,32 @@ function shareInvite() {
 async function runBusy(btn, fn) {
   if (btn.disabled) return;
   const card = btn.classList.contains('rtap'), label = btn.innerHTML; btn.disabled = true;
-  if (card) btn.classList.add('busy'); else btn.innerHTML = '⏳ Đang xử lý…';
+  if (card) btn.classList.add('busy'); else btn.innerHTML = '<i class="i i-hourglass"></i> Đang xử lý…';
   try { await fn(); } catch (e) { toast('⚠️ ' + (e && e.message ? cloudError(e) : e)); }
   finally { if (document.body.contains(btn)) { btn.disabled = false; if (card) btn.classList.remove('busy'); else btn.innerHTML = label; } }
 }
 const statusText = () => ({ online: 'Đang kết nối trực tiếp', offline: 'Mất mạng — sẽ tự đồng bộ lại', connecting: 'Đang kết nối…' }[roomStatus]);
 function openRoomSheet() {
   haptic();
-  if (!CLOUD_ON) return openSheet(`<h3>☁️ Phòng chơi chung</h3>
+  if (!CLOUD_ON) return openSheet(`<h3><i class="i i-cloud"></i> Phòng chơi chung</h3>
     <p>Chế độ phòng online chưa được bật trên trang này. Người cài đặt trang cần tạo dự án Firebase (miễn phí) và dán cấu hình vào file <b>config.js</b> — xem hướng dẫn trong README.</p>
     <button class="btn block" onclick="closeSheet()">Đóng</button>`);
   if (!room) return goLobby();
   openSheet(`
     <div class="room-card"><div class="logo img"><img src="icons/favicon.svg" alt=""></div><div style="min-width:0"><h3 style="margin:0">${esc(room.name)}</h3>
       <div class="small muted">Mã phòng: <b>${esc(room.id)}</b>${room.pw ? ` · Mật khẩu: <b>${esc(room.pw)}</b>` : ''}</div></div></div>
-    <div class="room-meta"><span class="role ${room.admin ? 'adm' : ''}">${isMain() ? '👑 Quản lý chính' : room.admin ? '✏️ Quản lý phụ' : '👁 Chỉ xem'}</span>
+    <div class="room-meta"><span class="role ${room.admin ? 'adm' : ''}">${isMain() ? '<i class="i i-crown"></i> Quản lý chính' : room.admin ? '<i class="i i-pencil"></i> Quản lý phụ' : '<i class="i i-eye"></i> Chỉ xem'}</span>
       <span class="small muted"><i class="dot ${roomStatus}"></i> ${statusText()}</span></div>
     <div style="display:grid;gap:10px;margin-top:16px">
-      <button class="btn primary block" onclick="shareInvite()">📨 Mời mọi người vào phòng</button>
-      ${room.admin ? '' : `<button class="btn block" onclick="openUnlock()">🔑 Nhập mã quản lý để sửa</button>`}
+      <button class="btn primary block" onclick="shareInvite()"><i class="i i-send"></i> Mời mọi người vào phòng</button>
+      ${room.admin ? '' : `<button class="btn block" onclick="openUnlock()"><i class="i i-key"></i> Nhập mã quản lý để sửa</button>`}
       ${isMain() ? `<div class="grid2">
-        <button class="btn" onclick="openRename()">✏️ Đổi tên</button>
-        <button class="btn" onclick="openHelpers()">🧑‍🤝‍🧑 Mã phụ</button>
-        <button class="btn" onclick="openChangePw()">🔒 Đổi mật khẩu</button>
-        <button class="btn" onclick="openChangeCode()">🔑 Đổi mã QL</button></div>` : ''}
-      <button class="btn block" onclick="leaveRoom()">🚪 Rời phòng · về danh sách phòng</button>
-      ${isMain() ? `<button class="btn danger block" onclick="openDeleteRoom()">🗑️ Xoá phòng</button>` : ''}
+        <button class="btn" onclick="openRename()"><i class="i i-pencil"></i> Đổi tên</button>
+        <button class="btn" onclick="openHelpers()"><i class="i i-users"></i> Mã phụ</button>
+        <button class="btn" onclick="openChangePw()"><i class="i i-lock"></i> Đổi mật khẩu</button>
+        <button class="btn" onclick="openChangeCode()"><i class="i i-key"></i> Đổi mã QL</button></div>` : ''}
+      <button class="btn block" onclick="leaveRoom()"><i class="i i-logout"></i> Rời phòng · về danh sách phòng</button>
+      ${isMain() ? `<button class="btn danger block" onclick="openDeleteRoom()"><i class="i i-trash"></i> Xoá phòng</button>` : ''}
     </div>`);
 }
 /* ---------- sảnh phòng ---------- */
@@ -357,36 +357,36 @@ const fmtDate = t => t ? new Date(t).toLocaleDateString('vi-VN', { day: '2-digit
 function roomCard(r, mine) {
   const live = (lobbyRooms || []).find(x => x.id === r.id), sp = sportOf((live || r).sport);
   const h = (sp.key === 'pickleball' ? 196 : 138) + hue(r.name) % 34;
-  const badge = mine ? (r.admin ? '✏️ Quản lý' : '👁 Đã vào') : '🔒';
+  const badge = mine ? (r.admin ? '<i class="i i-pencil"></i> Quản lý' : '<i class="i i-eye"></i> Đã vào') : '<i class="i i-lock"></i>';
   const meta = mine ? '#' + r.id : fmtDate(r.created) ? 'Tạo ' + fmtDate(r.created) : '#' + r.id;
   return `<div class="rcard"><button class="rtap ${sp.key}" style="--h:${h}" onclick="pickRoom(this,'${esc(r.id)}')">
       <div class="rtop"><div class="av">${spIco(sp.key)}</div><span class="rbadge">${badge}</span></div>
       <div class="rbody"><div class="nm">${esc(r.name)}</div><div class="meta">${esc(meta)}</div>${spTag(sp.key)}
         <div class="go">${mine ? 'Vào ngay →' : 'Nhập mật khẩu →'}</div></div></button>
-    ${mine ? `<button class="rx" onclick="forgetRoom('${esc(r.id)}')" aria-label="Bỏ khỏi danh sách của bạn">✕</button>` : ''}</div>`;
+    ${mine ? `<button class="rx" onclick="forgetRoom('${esc(r.id)}')" aria-label="Bỏ khỏi danh sách của bạn"><i class="i i-x"></i></button>` : ''}</div>`;
 }
 function viewLobby() {
   const rec = recentRooms();
   return `
     <div class="lobby-actions">
-      <button class="btn primary" onclick="openCreate()">➕ Tạo phòng</button>
-      <button class="btn ghost" onclick="openJoin()">🔑 Nhập mã</button></div>
+      <button class="btn primary" onclick="openCreate()"><i class="i i-plus"></i> Tạo phòng</button>
+      <button class="btn ghost" onclick="openJoin()"><i class="i i-key"></i> Nhập mã</button></div>
     ${rec.length ? `<div class="sec-title"><h2>Phòng của bạn · ${rec.length}</h2></div>
       <div class="rgrid">${rec.map(r => roomCard(r, true)).join('')}</div>` : ''}
     <div class="sec-title"><h2>Phòng hiện có <span id="roomCount"></span></h2></div>
-    <div class="seg sm" style="margin-bottom:10px">${[['all', 'Tất cả'], ['badminton', '🏸 Cầu lông'], ['pickleball', '🏓 Pickleball']].map(([k, l]) =>
-      `<button class="${lobbySport === k ? 'on' : ''}" onclick="lobbySport='${k}';render()">${l}</button>`).join('')}</div>
-    <div class="add-row search"><input id="lobbyQ" type="search" placeholder="🔍 Tìm theo tên nhóm hoặc mã phòng" autocomplete="off"
+    <div class="seg sm" style="margin-bottom:10px">${[['all', 'Tất cả'], ['badminton', 'Cầu lông'], ['pickleball', 'Pickleball']].map(([k, l]) =>
+      `<button class="${lobbySport === k ? 'on' : ''}" onclick="lobbySport='${k}';render()">${k === 'all' ? '' : spIco(k)}${l}</button>`).join('')}</div>
+    <div class="add-row search"><i class="i i-search"></i><input id="lobbyQ" type="search" placeholder="Tìm theo tên nhóm hoặc mã phòng" autocomplete="off"
       value="${esc(lobbyQ)}" oninput="lobbyQ=this.value;renderRoomList()"></div>
     <div id="roomList" style="margin-top:12px"></div>
-    <button class="btn ghost block" style="margin-top:18px" onclick="goLocal()">📱 Dùng trên máy này, không vào phòng</button>
-    <div class="tip">💡 <span>Chạm vào một phòng rồi nhập mật khẩu do người quản lý gửi. Phòng đã vào sẽ nằm ở mục "Phòng của bạn", lần sau chạm là vào luôn.</span></div>`;
+    <button class="btn ghost block" style="margin-top:18px" onclick="goLocal()"><i class="i i-phone"></i> Dùng trên máy này, không vào phòng</button>
+    <div class="tip"><i class="i i-info"></i> <span>Chạm vào một phòng rồi nhập mật khẩu do người quản lý gửi. Phòng đã vào sẽ nằm ở mục "Phòng của bạn", lần sau chạm là vào luôn.</span></div>`;
 }
 function renderRoomList() {
   const el = document.getElementById('roomList'); if (!el) return;
   const cnt = document.getElementById('roomCount');
   const box = html => `<div class="card small muted" style="text-align:center;padding:22px 16px">${html}</div>`;
-  if (lobbyErr) { el.innerHTML = box(`⚠️ ${esc(lobbyErr)}<br><button class="link" style="margin-top:8px" onclick="retryRooms()">Thử lại</button>`); return; }
+  if (lobbyErr) { el.innerHTML = box(`<i class="i i-alert"></i> ${esc(lobbyErr)}<br><button class="link" style="margin-top:8px" onclick="retryRooms()">Thử lại</button>`); return; }
   if (!lobbyRooms) { el.innerHTML = `<div class="rgrid">${'<div class="rskel"></div>'.repeat(4)}</div>`; return; }
   const mine = new Set(recentRooms().map(r => r.id));
   const others = lobbyRooms.filter(r => !mine.has(r.id));
@@ -394,7 +394,7 @@ function renderRoomList() {
   const q = fold(lobbyQ.trim());
   const list = others.filter(r => (lobbySport === 'all' || r.sport === lobbySport) && (!q || fold(r.name).includes(q) || r.id.includes(q)));
   el.innerHTML = list.length ? `<div class="rgrid">${list.map(r => roomCard(r, false)).join('')}</div>`
-    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : lobbySport !== 'all' && others.length ? `Chưa có phòng ${sportOf(lobbySport).name} nào — bấm <b>Tạo phòng</b> để mở phòng đầu tiên` : !lobbyRooms.length ? '🏸🏓 Chưa có phòng nào — bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
+    : box(q ? `Không có phòng nào khớp "${esc(lobbyQ.trim())}"` : lobbySport !== 'all' && others.length ? `Chưa có phòng ${sportOf(lobbySport).name} nào — bấm <b>Tạo phòng</b> để mở phòng đầu tiên` : !lobbyRooms.length ? '<i class="i i-badminton"></i><i class="i i-pickleball"></i> Chưa có phòng nào — bấm <b>Tạo phòng</b> để bắt đầu' : 'Bạn đã có trong tất cả các phòng hiện có');
   renderLobbyStats();
 }
 function renderLobbyStats() {
@@ -411,7 +411,7 @@ function pickNewSport(k) {
 function openCreate() {
   const has = S.players.length > 0 && !room;
   newSport = lobbySport !== 'all' ? lobbySport : SP().key;
-  openSheet(`<h3>➕ Tạo phòng mới</h3><p>Bạn sẽ là người quản lý phòng.</p>
+  openSheet(`<h3><i class="i i-plus"></i> Tạo phòng mới</h3><p>Bạn sẽ là người quản lý phòng.</p>
     <div class="field" id="newSport"><label>Môn chơi</label>${sportPicker(newSport, 'pickNewSport')}</div>
     <div class="field"><label>Tên nhóm</label><input type="text" id="rName" maxlength="40" placeholder="VD: Nhóm Thứ 7 sân Cầu Giấy"
       oninput="if(!this.dataset.t){document.getElementById('rId').value=suggestId(this.value)}" data-t=""></div>
@@ -424,11 +424,11 @@ function openCreate() {
     ${has ? `<label class="check"><input type="checkbox" id="rCopy" checked> Dùng danh sách ${S.players.length} người chơi đang có trên máy</label>` : ''}
     <div class="row2"><button class="btn" onclick="closeSheet()">Huỷ</button>
       <button class="btn primary" onclick="runBusy(this,()=>createRoom(v('rName'),v('rId'),v('rPw'),v('rAdm'),!!(document.getElementById('rCopy')||{}).checked,newSport))">Tạo phòng</button></div>
-    <p class="small" style="margin:12px 0 0">⚠️ Hãy ghi nhớ mật khẩu và mã quản lý — không thể khôi phục nếu quên.</p>`);
+    <p class="small" style="margin:12px 0 0"><i class="i i-alert"></i> Hãy ghi nhớ mật khẩu và mã quản lý — không thể khôi phục nếu quên.</p>`);
 }
 const v = id => (document.getElementById(id) || { value: '' }).value.trim();
 function openJoin(prefill, name) {
-  openSheet(`<h3>🔑 ${name ? 'Vào phòng ' + esc(name) : 'Vào phòng'}</h3>
+  openSheet(`<h3><i class="i i-key"></i> ${name ? 'Vào phòng ' + esc(name) : 'Vào phòng'}</h3>
     <p>${name ? 'Nhập mật khẩu do người quản lý phòng gửi.' : 'Nhập mã phòng và mật khẩu do người quản lý gửi.'}</p>
     <div class="field" ${name ? 'hidden' : ''}><label>Mã phòng</label><input type="text" id="jId" maxlength="30" autocapitalize="off" value="${esc(prefill || '')}"></div>
     <div class="field"><label>Mật khẩu</label><input type="text" id="jPw" maxlength="40" autocapitalize="off" autocomplete="off"
@@ -438,7 +438,7 @@ function openJoin(prefill, name) {
   if (prefill) setTimeout(() => { const el = document.getElementById('jPw'); if (el) el.focus(); }, 320);
 }
 function openUnlock() {
-  openSheet(`<h3>🔑 Mã quản lý</h3><p>Nhập mã quản lý để được xếp sân, thêm người, sửa kết quả trên máy này.</p>
+  openSheet(`<h3><i class="i i-key"></i> Mã quản lý</h3><p>Nhập mã quản lý để được xếp sân, thêm người, sửa kết quả trên máy này.</p>
     <div class="field"><input type="text" id="uCode" maxlength="40" autocapitalize="off" autocomplete="off" placeholder="Mã quản lý"></div>
     <div class="row2"><button class="btn" onclick="openRoomSheet()">Quay lại</button>
       <button class="btn primary" onclick="runBusy(this,()=>unlockAdmin(v('uCode')))">Mở khoá</button></div>`);

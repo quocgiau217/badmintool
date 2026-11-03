@@ -53,9 +53,9 @@ function togglePaid(pid) { haptic(); const m = money(); m.paid[pid] ? delete m.p
 function toggleExclude(pid) { haptic(); const m = money(); m.exclude[pid] ? delete m.exclude[pid] : (m.exclude[pid] = true); delete m.paid[pid]; save(); render(); }
 function openCost(id) {
   const it = id && money().items.find(x => x.id === id);
-  const presets = [['Tiền sân', '🏟️'], [SP().key === 'pickleball' ? 'Tiền bóng' : 'Tiền cầu', SP().emoji], ['Nước uống', '🥤'], ['Khác', '🧾']];
-  openSheet(`<h3>${it ? 'Sửa khoản chi' : '➕ Thêm khoản chi'}</h3><p>Nhập số tiền kiểu 200k, 1.2tr hoặc 150000.</p>
-    ${it ? '' : `<div class="chips">${presets.map(([l, e]) => `<button class="chipbtn" onclick="document.getElementById('cLabel').value='${l}';document.getElementById('cAmt').focus()">${e} ${l}</button>`).join('')}</div>`}
+  const presets = [['Tiền sân', 'court'], [SP().key === 'pickleball' ? 'Tiền bóng' : 'Tiền cầu', SP().key], ['Nước uống', 'cup'], ['Khác', 'receipt']];
+  openSheet(`<h3>${it ? 'Sửa khoản chi' : '<i class="i i-plus"></i> Thêm khoản chi'}</h3><p>Nhập số tiền kiểu 200k, 1.2tr hoặc 150000.</p>
+    ${it ? '' : `<div class="chips">${presets.map(([l, e]) => `<button class="chipbtn" onclick="document.getElementById('cLabel').value='${l}';document.getElementById('cAmt').focus()"><i class="i i-${e}"></i>${l}</button>`).join('')}</div>`}
     <div class="field"><label>Khoản chi</label><input type="text" id="cLabel" maxlength="40" value="${esc(it ? it.label : '')}" placeholder="vd: Tiền sân"></div>
     <div class="field"><label>Số tiền</label><input type="text" id="cAmt" inputmode="decimal" value="${it ? it.amount : ''}" placeholder="vd: 240k"
       onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cGo').click()}"></div>
@@ -64,7 +64,7 @@ function openCost(id) {
 }
 function openBank() {
   const b = S.settings.bank || {};
-  openSheet(`<h3>🏦 Tài khoản nhận tiền</h3><p>Mọi người sẽ quét mã QR để chuyển khoản đúng số tiền của mình.</p>
+  openSheet(`<h3><i class="i i-bank"></i> Tài khoản nhận tiền</h3><p>Mọi người sẽ quét mã QR để chuyển khoản đúng số tiền của mình.</p>
     <div class="field"><label>Ngân hàng</label><select id="bBin" class="sel">${BANKS.map(([bin, n]) => `<option value="${bin}" ${b.bin === bin ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
     <div class="field"><label>Số tài khoản</label><input type="text" id="bAcc" inputmode="numeric" maxlength="30" value="${esc(b.acc || '')}" autocomplete="off"></div>
     <div class="field"><label>Tên chủ tài khoản</label><input type="text" id="bName" maxlength="50" value="${esc(b.name || '')}" placeholder="VD: NGUYEN VAN A" autocapitalize="characters"></div>
@@ -91,12 +91,12 @@ function openPay(pid) {
   const bill = moneyBill(), row = bill.rows.find(r => r.p.id === pid); if (!row) return;
   const b = S.settings.bank, url = qrUrl(row.amount, payNote(row.p));
   openSheet(`<div style="text-align:center"><h3>${esc(row.p.name)} · ${vnd(row.amount)}</h3>
-    <p>${row.paid ? '✅ Đã trả' : bill.byMatches ? `${row.games} trận` : 'Chia đều'}</p>
+    <p>${row.paid ? '<i class="i i-check-circle"></i> Đã trả' : bill.byMatches ? `${row.games} trận` : 'Chia đều'}</p>
     ${url ? `<img class="qr" src="${url}" alt="Mã QR chuyển khoản" onerror="this.replaceWith(Object.assign(document.createElement('p'),{textContent:'Không tải được mã QR (cần mạng)'}))">
       <div class="small muted" style="margin-top:8px">${esc(bankName(b.bin))} · <b>${esc(b.acc)}</b>${b.name ? ' · ' + esc(b.name) : ''}<br>Nội dung: ${esc(payNote(row.p))}</div>`
-      : `<p class="small">${canEdit() ? 'Chưa có tài khoản nhận tiền.' : 'Người quản lý chưa nhập tài khoản nhận tiền.'}</p>${canEdit() ? `<button class="btn block" onclick="openBank()">🏦 Nhập tài khoản</button>` : ''}`}
+      : `<p class="small">${canEdit() ? 'Chưa có tài khoản nhận tiền.' : 'Người quản lý chưa nhập tài khoản nhận tiền.'}</p>${canEdit() ? `<button class="btn block" onclick="openBank()"><i class="i i-bank"></i> Nhập tài khoản</button>` : ''}`}
     <div class="row2"><button class="btn" onclick="closeSheet()">Đóng</button>
-      ${canEdit() ? `<button class="btn primary" onclick="togglePaid('${pid}');closeSheet()">${row.paid ? 'Đánh dấu chưa trả' : '✅ Đã nhận tiền'}</button>` : ''}</div></div>`);
+      ${canEdit() ? `<button class="btn primary" onclick="togglePaid('${pid}');closeSheet()">${row.paid ? 'Đánh dấu chưa trả' : '<i class="i i-check-circle"></i> Đã nhận tiền'}</button>` : ''}</div></div>`);
 }
 function moneyText() {
   const bill = moneyBill(), b = S.settings.bank;
@@ -119,7 +119,7 @@ function viewMoney() {
       <button class="tap" onclick="openPay('${r.p.id}')">${avatar(r.p, 'sm')}
         <div class="mid"><div class="nm">${esc(r.p.name)}</div><div class="meta">${bill.byMatches ? r.games + ' trận · ' : ''}${r.paid ? 'Đã trả' : 'Chạm để xem mã QR'}</div></div>
         <b class="amt">${vnd(r.amount)}</b></button>
-      ${ed ? `<button class="paybox ${r.paid ? 'on' : ''}" onclick="togglePaid('${r.p.id}')" aria-label="Đã trả">${r.paid ? '✓' : ''}</button>` : r.paid ? '<span class="paybox on">✓</span>' : ''}
+      ${ed ? `<button class="paybox ${r.paid ? 'on' : ''}" onclick="togglePaid('${r.p.id}')" aria-label="Đã trả">${r.paid ? '<i class="i i-check"></i>' : ''}</button>` : r.paid ? '<span class="paybox on"><i class="i i-check"></i></span>' : ''}
     </div>`).join('');
   return `
     <div class="money-hero card">
@@ -127,19 +127,19 @@ function viewMoney() {
       <div><span class="small muted">Đã thu</span><b>${vnd(bill.got)}</b><span class="small muted">${bill.rows.length ? `${bill.rows.length - left}/${bill.rows.length} người` : ''}</span></div>
       ${bill.rows.length ? `<div class="bar-track"><div class="bar-fill" style="width:${bill.due ? Math.round(bill.got / bill.due * 100) : 0}%"></div></div>` : ''}
     </div>
-    <div class="sec-title"><h2>Khoản chi</h2>${ed ? `<button class="link" onclick="openCost()">➕ Thêm</button>` : ''}</div>
+    <div class="sec-title"><h2>Khoản chi</h2>${ed ? `<button class="link" onclick="openCost()"><i class="i i-plus"></i> Thêm</button>` : ''}</div>
     <div class="card mlist">${items}</div>
     ${bill.total ? `
     <div class="sec-title"><h2>Mỗi người trả</h2>${bill.due > bill.total ? `<span class="small muted">làm tròn, dư ${vnd(bill.due - bill.total)}</span>` : ''}</div>
     ${ed ? `<div class="seg sm" style="margin-bottom:10px"><button class="${m.mode !== 'matches' ? 'on' : ''}" onclick="setMoneyMode('equal')">Chia đều</button>
       <button class="${m.mode === 'matches' ? 'on' : ''}" onclick="setMoneyMode('matches')">Theo số trận đã đánh</button></div>` : ''}
     ${bill.rows.length ? `<div class="plist">${rows}</div>` : `<div class="card small muted">Chưa có ai có mặt hoặc đã chơi.</div>`}
-    ${ed && (bill.rows.length || bill.excluded.length) ? `<details class="hist" style="margin-top:10px"><summary>🎁 Miễn tiền (chủ sân, khách mời…)<span class="chev">${ICON.chev}</span></summary>
-      <div class="body chips">${[...bill.rows.map(r => r.p), ...bill.excluded].map(p => `<button class="chipbtn ${m.exclude[p.id] ? 'on' : ''}" onclick="toggleExclude('${p.id}')">${m.exclude[p.id] ? '🎁 ' : ''}${esc(p.name)}</button>`).join('')}</div></details>` : ''}
+    ${ed && (bill.rows.length || bill.excluded.length) ? `<details class="hist" style="margin-top:10px"><summary><i class="i i-gift"></i> Miễn tiền (chủ sân, khách mời…)<span class="chev">${ICON.chev}</span></summary>
+      <div class="body chips">${[...bill.rows.map(r => r.p), ...bill.excluded].map(p => `<button class="chipbtn ${m.exclude[p.id] ? 'on' : ''}" onclick="toggleExclude('${p.id}')">${m.exclude[p.id] ? '<i class="i i-gift"></i> ' : ''}${esc(p.name)}</button>`).join('')}</div></details>` : ''}
     ` : ''}
-    <div class="sec-title"><h2>Tài khoản nhận tiền</h2>${ed ? `<button class="link" onclick="openBank()">${b && b.acc ? 'Sửa' : '➕ Nhập'}</button>` : ''}</div>
-    <div class="card small">${b && b.acc ? `🏦 <b>${esc(bankName(b.bin))}</b> · ${esc(b.acc)}${b.name ? ' · ' + esc(b.name) : ''}<div class="muted" style="margin-top:4px">Chạm vào tên từng người để hiện mã QR đúng số tiền.</div>`
+    <div class="sec-title"><h2>Tài khoản nhận tiền</h2>${ed ? `<button class="link" onclick="openBank()">${b && b.acc ? 'Sửa' : '<i class="i i-plus"></i> Nhập'}</button>` : ''}</div>
+    <div class="card small">${b && b.acc ? `<i class="i i-bank"></i> <b>${esc(bankName(b.bin))}</b> · ${esc(b.acc)}${b.name ? ' · ' + esc(b.name) : ''}<div class="muted" style="margin-top:4px">Chạm vào tên từng người để hiện mã QR đúng số tiền.</div>`
       : `<span class="muted">${ed ? 'Nhập tài khoản để mọi người quét mã QR chuyển khoản.' : 'Người quản lý chưa nhập tài khoản.'}</span>`}</div>
-    ${bill.total ? `<button class="btn block" style="margin-top:14px" onclick="shareText(moneyText())">📤 Gửi bảng tiền vào nhóm</button>` : ''}
-    <div class="tip">💡 <span>Tiền được tính cho người có mặt hoặc đã chơi trong buổi. Bắt đầu buổi mới sẽ xoá các khoản chi của buổi này.</span></div>`;
+    ${bill.total ? `<button class="btn block" style="margin-top:14px" onclick="shareText(moneyText())"><i class="i i-share"></i> Gửi bảng tiền vào nhóm</button>` : ''}
+    <div class="tip"><i class="i i-info"></i> <span>Tiền được tính cho người có mặt hoặc đã chơi trong buổi. Bắt đầu buổi mới sẽ xoá các khoản chi của buổi này.</span></div>`;
 }

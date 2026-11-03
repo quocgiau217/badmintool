@@ -4,7 +4,7 @@
  * Dữ liệu phòng vẫn do Firebase tự đồng bộ lại khi có mạng. */
 const CACHE = 'xepsan-v1';
 const SHELL = [
-  './', 'index.html', 'config.js', 'manifest.webmanifest', 'css/app.css',
+  './', 'index.html', 'config.js', 'manifest.webmanifest', 'css/app.css', 'css/icons.css',
   'js/state.js', 'js/algo.js', 'js/rating.js', 'js/actions.js', 'js/ui.js', 'js/money.js', 'js/me.js', 'js/tour.js', 'js/cloud.js', 'js/roomadmin.js', 'js/views.js', 'js/main.js',
   'icons/favicon.svg', 'icons/favicon-32.png', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];

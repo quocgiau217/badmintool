@@ -17,7 +17,7 @@ function setMe(id) {
 function openWhoAmI() {
   haptic();
   const me = myPid(), list = S.players.slice().sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  openSheet(`<h3>👋 Bạn là ai?</h3><p>Chọn tên của bạn để tự điểm danh và được báo khi tới lượt vào sân. Chỉ lưu trên máy này.</p>
+  openSheet(`<h3><i class="i i-user"></i> Bạn là ai?</h3><p>Chọn tên của bạn để tự điểm danh và được báo khi tới lượt vào sân. Chỉ lưu trên máy này.</p>
     ${list.length ? `<div class="chips">${list.map(p => `<button class="chipbtn ${p.id === me ? 'on' : ''}" onclick="setMe('${p.id}')">${esc(p.name)}</button>`).join('')}</div>`
       : `<div class="card small muted">Phòng chưa có ai trong danh sách.</div>`}
     <p class="small" style="margin:4px 2px 12px">Chưa có tên bạn? Nhờ người quản lý thêm vào danh sách.</p>
@@ -68,10 +68,10 @@ function mySpot() {
 const names = ids => ids.map(x => P(x).name).join(' & ');
 function spotText(s) {
   if (!s) return '';
-  if (s.ci != null) return `${SP().emoji} Đang ở <b>${esc(cName(s.c, s.ci))}</b>${s.partner.length ? ' · cùng ' + esc(names(s.partner)) : ''} · gặp ${esc(names(s.opp))}`;
+  if (s.ci != null) return `${spIco(SP().key)} Đang ở <b>${esc(cName(s.c, s.ci))}</b>${s.partner.length ? ' · cùng ' + esc(names(s.partner)) : ''} · gặp ${esc(names(s.opp))}`;
   const next = (S.session.plan || []).find(rd => rd.courts.some(c => [...c.a, ...c.b].includes(myPid())));
-  if (s.rest && isQueue()) { const k = s.r.resting.indexOf(myPid()) + 1; return k <= perCourt() ? `⏳ Thứ ${k} trong hàng chờ · <b>chuẩn bị vào sân!</b>` : `⏳ Thứ ${k} trong hàng chờ`; }
-  if (s.rest) return `☕ Nghỉ vòng này${next ? ` · vào sân ở vòng ${next.no} (dự kiến)` : ''}`;
+  if (s.rest && isQueue()) { const k = s.r.resting.indexOf(myPid()) + 1; return k <= perCourt() ? `<i class="i i-hourglass"></i> Thứ ${k} trong hàng chờ · <b>chuẩn bị vào sân!</b>` : `<i class="i i-hourglass"></i> Thứ ${k} trong hàng chờ`; }
+  if (s.rest) return `<i class="i i-coffee"></i> Nghỉ vòng này${next ? ` · vào sân ở vòng ${next.no} (dự kiến)` : ''}`;
   return '';
 }
 let lastNextUp = null;
@@ -107,13 +107,13 @@ async function enableNotify() {
 function meCard(where) {
   if (!room) return '';
   const id = myPid();
-  if (!id) return S.players.length ? `<button class="me-card ask" onclick="openWhoAmI()"><span class="me-ico">👋</span>
+  if (!id) return S.players.length ? `<button class="me-card ask" onclick="openWhoAmI()"><span class="me-ico"><i class="i i-user"></i></span>
       <div><b>Bạn là ai trong danh sách?</b><div class="small muted">Chọn tên để tự điểm danh và được báo khi tới lượt</div></div><span class="go">›</span></button>` : '';
   const p = P(id), s = where === 'play' ? mySpot() : null, line = spotText(s);
   const canAsk = 'Notification' in window && Notification.permission === 'default';
   return `<div class="me-card ${p.active ? 'in' : ''}">${avatar(p, 'sm')}
     <div class="me-mid"><button class="me-name" onclick="openWhoAmI()">${esc(p.name)} <span class="small muted">· đổi</span></button>
-      <div class="small">${line || (p.active ? '✅ Đã điểm danh có mặt' : '⚪ Chưa điểm danh')}</div></div>
-    ${canAsk ? `<button class="icon-btn bell" onclick="enableNotify()" aria-label="Bật thông báo">🔔</button>` : ''}
-    <button class="btn sm ${p.active ? '' : 'primary'}" onclick="checkInMe(${!p.active})">${p.active ? '👋 Tôi về' : '✅ Tôi có mặt'}</button></div>`;
+      <div class="small">${line || (p.active ? '<i class="i i-check-circle"></i> Đã điểm danh có mặt' : 'Chưa điểm danh')}</div></div>
+    ${canAsk ? `<button class="icon-btn bell" onclick="enableNotify()" aria-label="Bật thông báo"><i class="i i-bell"></i></button>` : ''}
+    <button class="btn sm ${p.active ? '' : 'primary'}" onclick="checkInMe(${!p.active})">${p.active ? '<i class="i i-user"></i> Tôi về' : '<i class="i i-check-circle"></i> Tôi có mặt'}</button></div>`;
 }

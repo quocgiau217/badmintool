@@ -4,6 +4,7 @@ const LV = ['', 'Mới chơi', 'Yếu', 'Trung bình', 'Khá', 'Giỏi'];
 function hue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 360; return h; }
 function initials(name) { const w = name.trim().split(/\s+/); return (w[w.length - 1] || '?').charAt(0); }
 function avatar(p, cls = '') { return `<div class="av ${cls}" style="background:hsl(${hue(p.name)} 55% 46%)">${esc(initials(p.name))}</div>`; }
+const medalHtml = i => `<span class="medal m${i + 1}">${i + 1}</span>`;
 const dots = n => `<span class="dots">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'f' : ''}"></i>`).join('')}</span>`;
 const lvBadge = p => { const l = lvOf(p); return `<span class="lv lv${l}">${dots(l)} ${l}</span>`; };
 
@@ -44,7 +45,14 @@ function setSport(k) {
 }
 
 let toastT;
-function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+// thông báo nhanh: chữ thuần (lọc emoji), cảnh báo có màu riêng
+const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{23F1}\u{23F3}]\u{FE0F}?/gu;
+function toast(msg) {
+  const t = document.getElementById('toast'), raw = String(msg);
+  t.textContent = raw.replace(EMOJI_RE, '').replace(/\s{2,}/g, ' ').trim();
+  t.classList.toggle('warn', /^\s*⚠/.test(raw));
+  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
 
 /* ---------- bottom sheet ---------- */
 function openSheet(html) {
@@ -95,7 +103,7 @@ function setFormat(f) {
   if (document.getElementById('sheet').classList.contains('show')) openSettings();
 }
 function setFlow(f) { S.settings.flow = f; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
-const fmtElapsed = t => { const s = Math.max(0, Math.floor((nowSrv() - t) / 1000)); return `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const fmtElapsed = t => { const s = Math.max(0, Math.floor((nowSrv() - t) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function setMode(m) { S.settings.mode = m; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
 function settingsHtml() {
   const act = activePlayers().length, K = perCourt(), maxC = Math.max(1, Math.floor(act / K));
@@ -103,8 +111,8 @@ function settingsHtml() {
   return `
     <div class="field"><label>Môn chơi</label>${sportPicker(SP().key, 'setSport')}</div>
     <div class="field"><label>Hình thức</label><div class="seg">
-      <button class="${S.settings.format !== 'singles' ? 'on' : ''}" onclick="setFormat('doubles')">👥 Đánh đôi</button>
-      <button class="${S.settings.format === 'singles' ? 'on' : ''}" onclick="setFormat('singles')">👤 Đánh đơn</button></div></div>
+      <button class="${S.settings.format !== 'singles' ? 'on' : ''}" onclick="setFormat('doubles')"><i class="i i-users"></i> Đánh đôi</button>
+      <button class="${S.settings.format === 'singles' ? 'on' : ''}" onclick="setFormat('singles')"><i class="i i-user"></i> Đánh đơn</button></div></div>
     <div class="field"><label>Số sân thuê được hôm nay</label><div class="stepper">
       <button onclick="setCourts(${S.settings.courts - 1})" ${S.settings.courts <= 1 ? 'disabled' : ''} aria-label="Bớt sân">−</button>
       <div><b>${S.settings.courts}</b><span>sân</span></div>
@@ -113,17 +121,17 @@ function settingsHtml() {
       ${Array.from({ length: S.settings.courts }, (_, i) => `<input type="text" maxlength="20" placeholder="Sân ${i + 1}"
         value="${esc(((S.settings.courtNames || [])[i] || '').trim())}" onchange="setCourtName(${i},this.value)" aria-label="Tên sân ${i + 1}">`).join('')}</div></div>
     <div class="field"><label>Cách luân phiên</label><div class="mode">
-      <button class="${S.settings.flow !== 'queue' ? 'on' : ''}" onclick="setFlow('rounds')"><b>🔄 Theo vòng</b><span>Các sân đổi người cùng lúc</span></button>
-      <button class="${S.settings.flow === 'queue' ? 'on' : ''}" onclick="setFlow('queue')"><b>⏩ Xếp hàng</b><span>Sân nào xong, người chờ vào ngay</span></button>
+      <button class="${S.settings.flow !== 'queue' ? 'on' : ''}" onclick="setFlow('rounds')"><b><i class="i i-refresh"></i> Theo vòng</b><span>Các sân đổi người cùng lúc</span></button>
+      <button class="${S.settings.flow === 'queue' ? 'on' : ''}" onclick="setFlow('queue')"><b><i class="i i-forward"></i> Xếp hàng</b><span>Sân nào xong, người chờ vào ngay</span></button>
     </div></div>
     <div class="field"><label>Cách xếp</label><div class="mode">
-      <button class="${S.settings.mode === 'balanced' ? 'on' : ''}" onclick="setMode('balanced')"><b>⚖️ Cân trình</b><span>2 đội ngang sức</span></button>
-      <button class="${S.settings.mode === 'random' ? 'on' : ''}" onclick="setMode('random')"><b>🎲 Ngẫu nhiên</b><span>Bỏ qua trình độ</span></button>
+      <button class="${S.settings.mode === 'balanced' ? 'on' : ''}" onclick="setMode('balanced')"><b><i class="i i-scale"></i> Cân trình</b><span>2 đội ngang sức</span></button>
+      <button class="${S.settings.mode === 'random' ? 'on' : ''}" onclick="setMode('random')"><b><i class="i i-dice"></i> Ngẫu nhiên</b><span>Bỏ qua trình độ</span></button>
     </div></div>
     <label class="check" style="margin:-4px 2px 14px"><input type="checkbox" ${S.settings.autoLevel ? 'checked' : ''} onchange="setAutoLevel(this.checked)">
-      📈 Trình độ tự cập nhật theo kết quả thắng/thua</label>
+      <i class="i i-trend"></i> Trình độ tự cập nhật theo kết quả thắng/thua</label>
     <div class="field" ${S.settings.flow === 'queue' ? 'hidden' : ''}><label>Xem trước lịch</label><div class="seg">${[0, 2, 3, 5, 8].map(n =>
       `<button class="${S.settings.preview === n ? 'on' : ''}" onclick="setPreview(${n})">${n ? n + ' vòng' : 'Tắt'}</button>`).join('')}</div></div>
-    ${act >= K ? `<div class="info">ℹ️ <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.
+    ${act >= K ? `<div class="info"><i class="i i-info"></i> <div>Mỗi vòng <b>${playing}</b> người vào ${used} sân${rest ? `, <b>${rest}</b> người nghỉ luân phiên` : ', không ai phải nghỉ'}.
       ${S.settings.courts > maxC ? `<br>Có ${S.settings.courts} sân nhưng chỉ đủ người cho ${maxC} sân.` : ''}</div></div>` : ''}`;
 }

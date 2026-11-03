@@ -88,9 +88,9 @@ function openResult(o) {
   ED = Object.assign({}, o, { w: o.winner || null });
   const team = t => `<div class="res-col">
       <button class="res-team ${t}" id="rt_${t}" onclick="edPick('${t}')">
-        <span class="res-tag">${o.labels ? esc(o.labels[t]) : 'ĐỘI ' + t.toUpperCase()}</span>
+        <span class="res-tag">${o.labels ? esc(o.labels[t]) : 'Đội ' + t.toUpperCase()}</span>
         ${o[t].map(id => `<span class="res-p">${avatar(P(id), 'xs')}<span>${esc(P(id).name)}</span></span>`).join('')}
-        <span class="res-win">🏆 Thắng</span></button>
+        <span class="res-win"><i class="i i-trophy"></i> Thắng</span></button>
       <input class="score" id="sc_${t}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="–"
         value="${o.score ? o.score[t === 'a' ? 0 : 1] : ''}" oninput="edScore()" aria-label="Điểm đội ${t.toUpperCase()}">
     </div>`;
@@ -176,8 +176,8 @@ function openShare() {
   if (!plan.length) return shareRound(false);
   openSheet(`<h3>Gửi vào nhóm</h3><p>Chia sẻ qua Zalo, Messenger… hoặc copy.</p>
     <div style="display:grid;gap:10px">
-      <button class="btn block" onclick="shareRound(false)">📋 Chỉ vòng ${r.no}</button>
-      <button class="btn primary block" onclick="shareRound(true)">🗓️ Cả lịch: vòng ${r.no} → ${plan[plan.length - 1].no}</button>
+      <button class="btn block" onclick="shareRound(false)"><i class="i i-clipboard"></i> Chỉ vòng ${r.no}</button>
+      <button class="btn primary block" onclick="shareRound(true)"><i class="i i-calendar"></i> Cả lịch: vòng ${r.no} → ${plan[plan.length - 1].no}</button>
     </div>`);
 }
 function focusP(id) { haptic(); focusId = focusId === id ? null : id; render(); }

@@ -13,7 +13,7 @@ async function checkMainCode(code) {
 /* ---------- đổi tên ---------- */
 function openRename() {
   if (!needMain()) return;
-  openSheet(`<h3>✏️ Đổi tên phòng</h3><p>Tên mới hiện ngay cho mọi người. Mã phòng giữ nguyên.</p>
+  openSheet(`<h3><i class="i i-pencil"></i> Đổi tên phòng</h3><p>Tên mới hiện ngay cho mọi người. Mã phòng giữ nguyên.</p>
     <div class="field"><input type="text" id="rnName" maxlength="40" value="${esc(room.name)}"></div>
     <div class="row2"><button class="btn" onclick="openRoomSheet()">Quay lại</button>
       <button class="btn primary" onclick="runBusy(this,()=>renameRoom(v('rnName')))">Lưu</button></div>`);
@@ -28,7 +28,7 @@ async function renameRoom(name) {
 /* ---------- đổi mật khẩu xem ---------- */
 function openChangePw() {
   if (!needMain()) return;
-  openSheet(`<h3>🔒 Đổi mật khẩu xem</h3><p>Link mời cũ sẽ hết hiệu lực; mọi người cần mật khẩu mới để vào lại. Dữ liệu phòng được giữ nguyên.</p>
+  openSheet(`<h3><i class="i i-lock"></i> Đổi mật khẩu xem</h3><p>Link mời cũ sẽ hết hiệu lực; mọi người cần mật khẩu mới để vào lại. Dữ liệu phòng được giữ nguyên.</p>
     <div class="field"><label>Mã quản lý hiện tại</label><input type="text" id="cpCode" maxlength="40" autocapitalize="off" autocomplete="off"></div>
     <div class="field"><label>Mật khẩu xem mới</label><input type="text" id="cpPw" maxlength="40" autocapitalize="off" autocomplete="off" placeholder="ít nhất 4 ký tự"></div>
     <div class="row2"><button class="btn" onclick="openRoomSheet()">Quay lại</button>
@@ -62,7 +62,7 @@ async function changePassword(code, pw) {
 /* ---------- đổi mã quản lý chính ---------- */
 function openChangeCode() {
   if (!needMain()) return;
-  openSheet(`<h3>🔑 Đổi mã quản lý</h3><p>Mọi máy khác đang quản lý (kể cả quản lý phụ) sẽ mất quyền và phải nhập lại mã. Mã phụ vẫn dùng được.</p>
+  openSheet(`<h3><i class="i i-key"></i> Đổi mã quản lý</h3><p>Mọi máy khác đang quản lý (kể cả quản lý phụ) sẽ mất quyền và phải nhập lại mã. Mã phụ vẫn dùng được.</p>
     <div class="field"><label>Mã quản lý hiện tại</label><input type="text" id="ccOld" maxlength="40" autocapitalize="off" autocomplete="off"></div>
     <div class="field"><label>Mã quản lý mới</label><input type="text" id="ccNew" maxlength="40" autocapitalize="off" autocomplete="off" placeholder="ít nhất 4 ký tự"></div>
     <div class="row2"><button class="btn" onclick="openRoomSheet()">Quay lại</button>
@@ -83,23 +83,23 @@ async function changeAdminCode(oldCode, newCode) {
 let helpersCache = null;
 async function openHelpers() {
   if (!needMain()) return;
-  openSheet(`<h3>🧑‍🤝‍🧑 Mã quản lý phụ</h3><p>Đang tải…</p>`);
+  openSheet(`<h3><i class="i i-users"></i> Mã quản lý phụ</h3><p>Đang tải…</p>`);
   try {
     await cloudInit();
     const [subs, adms] = await Promise.all([FB.get(dbRef('subKeys/' + room.key)), FB.get(dbRef('admins/' + room.key))]);
     const users = adms.val() || {};
     helpersCache = Object.entries(subs.val() || {}).map(([h, x]) => ({ h, n: x.n, t: x.t, devices: Object.values(users).filter(v => v === h).length }))
       .sort((a, b) => b.t - a.t);
-  } catch (e) { return openSheet(`<h3>🧑‍🤝‍🧑 Mã quản lý phụ</h3><p>⚠️ ${esc(cloudError(e))}</p><button class="btn block" onclick="openRoomSheet()">Quay lại</button>`); }
+  } catch (e) { return openSheet(`<h3><i class="i i-users"></i> Mã quản lý phụ</h3><p><i class="i i-alert"></i> ${esc(cloudError(e))}</p><button class="btn block" onclick="openRoomSheet()">Quay lại</button>`); }
   const list = helpersCache;
-  openSheet(`<h3>🧑‍🤝‍🧑 Mã quản lý phụ</h3><p>Người giữ mã phụ được xếp sân, sửa danh sách, ghi kết quả — nhưng không đổi được mật khẩu, mã quản lý hay xoá phòng.</p>
+  openSheet(`<h3><i class="i i-users"></i> Mã quản lý phụ</h3><p>Người giữ mã phụ được xếp sân, sửa danh sách, ghi kết quả — nhưng không đổi được mật khẩu, mã quản lý hay xoá phòng.</p>
     ${list.length ? `<div class="plist" style="box-shadow:none;border:1px solid var(--line);margin-bottom:14px">${list.map(x => `<div class="prow">
       <div style="flex:1;min-width:0"><div class="nm">${esc(x.n)}</div><div class="meta">${x.devices} máy đang dùng · tạo ${fmtDate(x.t)}</div></div>
       <button class="btn sm danger" onclick="runBusy(this,()=>revokeHelper('${x.h}'))">Thu hồi</button></div>`).join('')}</div>` : ''}
     <div class="field"><label>Tên người phụ</label><input type="text" id="hpName" maxlength="30" placeholder="VD: Lan (trưởng nhóm thứ 5)"></div>
     <div class="field"><label>Mã phụ</label><input type="text" id="hpCode" maxlength="40" autocapitalize="off" autocomplete="off" value="${String(100000 + Math.floor(Math.random() * 900000))}"></div>
     <div class="row2"><button class="btn" onclick="openRoomSheet()">Quay lại</button>
-      <button class="btn primary" onclick="runBusy(this,()=>addHelper(v('hpName'),v('hpCode')))">➕ Tạo mã phụ</button></div>`);
+      <button class="btn primary" onclick="runBusy(this,()=>addHelper(v('hpName'),v('hpCode')))"><i class="i i-plus"></i> Tạo mã phụ</button></div>`);
 }
 async function addHelper(name, code) {
   if (!name) throw new Error('Nhập tên người phụ');

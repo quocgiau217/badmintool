@@ -18,4 +18,4 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !wind
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 
 // đồng hồ trên từng sân
-setInterval(() => document.querySelectorAll('.timer[data-start]').forEach(el => { el.textContent = fmtElapsed(+el.dataset.start); }), 1000);
+setInterval(() => document.querySelectorAll('.timer [data-start]').forEach(el => { el.textContent = fmtElapsed(+el.dataset.start); }), 1000);

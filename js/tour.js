@@ -81,13 +81,13 @@ function openTourCreate() {
   tourDraft = tourDraft || Object.assign({ fmt: 'rr', bal: true }, makeTeams(true));
   tourSel = null;
   const d = tourDraft;
-  openSheet(`<h3>🏆 Tạo giải đấu</h3><p>${d.teams.length} đội ${teamSize() === 1 ? '(đánh đơn)' : '(đánh đôi)'} từ những người đang có mặt.</p>
+  openSheet(`<h3><i class="i i-trophy"></i> Tạo giải đấu</h3><p>${d.teams.length} đội ${teamSize() === 1 ? '(đánh đơn)' : '(đánh đôi)'} từ những người đang có mặt.</p>
     <div class="field"><label>Thể thức</label><div class="mode">
-      <button class="${d.fmt === 'rr' ? 'on' : ''}" onclick="tourDraft.fmt='rr';openTourCreate()"><b>🔁 Vòng tròn</b><span>Mọi đội gặp nhau, tính điểm</span></button>
-      <button class="${d.fmt === 'ko' ? 'on' : ''}" onclick="tourDraft.fmt='ko';openTourCreate()"><b>🪜 Loại trực tiếp</b><span>Thua là dừng, tới chung kết</span></button></div></div>
+      <button class="${d.fmt === 'rr' ? 'on' : ''}" onclick="tourDraft.fmt='rr';openTourCreate()"><b><i class="i i-repeat"></i> Vòng tròn</b><span>Mọi đội gặp nhau, tính điểm</span></button>
+      <button class="${d.fmt === 'ko' ? 'on' : ''}" onclick="tourDraft.fmt='ko';openTourCreate()"><b><i class="i i-bracket"></i> Loại trực tiếp</b><span>Thua là dừng, tới chung kết</span></button></div></div>
     ${teamSize() === 2 ? `<div class="field"><label>Chia đội</label><div class="seg">
-      <button class="${d.bal ? 'on' : ''}" onclick="tourShuffle(true)">⚖️ Cân trình</button>
-      <button class="${!d.bal ? 'on' : ''}" onclick="tourShuffle(false)">🎲 Ngẫu nhiên</button></div></div>` : ''}
+      <button class="${d.bal ? 'on' : ''}" onclick="tourShuffle(true)"><i class="i i-scale"></i> Cân trình</button>
+      <button class="${!d.bal ? 'on' : ''}" onclick="tourShuffle(false)"><i class="i i-dice"></i> Ngẫu nhiên</button></div></div>` : ''}
     <div class="field"><label>Các đội <span class="hint-i">— chạm 2 người để đổi chỗ</span></label>
       <div class="tteams">${d.teams.map((t, i) => `<div class="tteam"><span class="tn">${i + 1}</span>${t.p.map((id, j) =>
         `<button class="chipbtn ${tourSel && tourSel[0] === i && tourSel[1] === j ? 'on' : ''}" onclick="tourSwap(${i},${j})">${esc(P(id).name)}</button>`).join('')}</div>`).join('')}
@@ -120,7 +120,7 @@ function editTourMatch(id) {
   if (!canEdit()) return;
   const A = teamOf(m.a), B = teamOf(m.b);
   openResult({
-    title: `🏆 ${t.fmt === 'ko' ? koRoundName(m.rd, koRounds(t).length) : 'Lượt ' + (m.rd + 1)}`, a: A.p, b: B.p,
+    title: `<i class="i i-trophy"></i> ${t.fmt === 'ko' ? koRoundName(m.rd, koRounds(t).length) : 'Lượt ' + (m.rd + 1)}`, a: A.p, b: B.p,
     winner: m.res && m.res.winner, score: m.res && m.res.score,
     note: t.fmt === 'ko' ? ' Đổi kết quả sẽ làm thay đổi các trận phía sau.' : '',
     save(w, sc) { if (!w) delete t.res[id]; else { t.res[id] = { a: m.a, b: m.b, winner: w }; if (sc) t.res[id].score = sc; } },
@@ -150,30 +150,30 @@ function tourText() {
 /* ---------- màn hình ---------- */
 function tourMatchRow(t, m, label) {
   const side = k => { const id = m[k], won = m.res && m.res.winner === k;
-    return `<div class="tside ${won ? 'w' : m.res ? 'l' : ''}">${id ? esc(teamName(id)) : m.bye ? '<span class="muted">miễn đấu</span>' : '<span class="muted">chờ…</span>'}${won ? ' 🏆' : ''}</div>`; };
+    return `<div class="tside ${won ? 'w' : m.res ? 'l' : ''}">${id ? esc(teamName(id)) : m.bye ? '<span class="muted">miễn đấu</span>' : '<span class="muted">chờ…</span>'}${won ? ' <i class="i i-trophy"></i>' : ''}</div>`; };
   const can = canEdit() && m.a && m.b;
   return `<button class="tmatch ${m.res ? 'done' : ''}" ${can ? `onclick="editTourMatch('${m.id}')"` : 'disabled'}>
     ${label ? `<span class="sn">${label}</span>` : ''}<div class="tsides">${side('a')}${side('b')}</div>
-    <div class="tsc">${m.res && m.res.score ? m.res.score.join('–') : m.res ? '✓' : can ? ICON.edit : ''}</div></button>`;
+    <div class="tsc">${m.res && m.res.score ? m.res.score.join('–') : m.res ? '<i class="i i-check"></i>' : can ? ICON.edit : ''}</div></button>`;
 }
 function viewTour() {
   const t = tour();
-  const head = `<div class="round-h"><div class="t"><b>🏆 Giải đấu</b><span>${TOUR_NAMES[t.fmt]} · ${t.teams.length} đội</span></div>
+  const head = `<div class="round-h"><div class="t"><b><i class="i i-trophy"></i> Giải đấu</b><span>${TOUR_NAMES[t.fmt]} · ${t.teams.length} đội</span></div>
     <button class="icon-btn" onclick="shareText(tourText())" aria-label="Gửi nhóm">${ICON.share}</button></div>`;
   let body = '';
   if (t.fmt === 'rr') {
     const rounds = rrRounds(t), table = rrTable(t), all = rounds.flat(), done = all.filter(m => m.res).length;
     body = `<div class="sec-title"><h2>Bảng xếp hạng</h2><span class="small muted">${done}/${all.length} trận</span></div>
-      <div class="plist">${table.map((r, i) => `<div class="lb"><div class="rank ${i < 3 && r.w ? 'top' : ''}">${i < 3 && r.w ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>
+      <div class="plist">${table.map((r, i) => `<div class="lb"><div class="rank ${i < 3 && r.w ? 'top' : ''}">${i < 3 && r.w ? medalHtml(i) : i + 1}</div>
         <div class="mid"><div class="nm">${esc(teamName(r.id))}</div></div>
         <div class="nums"><div><b>${r.pl}</b>trận</div><div><b>${r.w}</b>thắng</div><div><b>${r.df > 0 ? '+' : ''}${r.df}</b>HS</div></div></div>`).join('')}</div>
       ${rounds.map((ms, r) => `<div class="sec-title"><h2>Lượt ${r + 1}</h2></div><div class="card tlist">${ms.map(m => tourMatchRow(t, m)).join('')}</div>`).join('')}`;
   } else {
     const rs = koRounds(t), fin = rs[rs.length - 1][0], champ = fin && fin.res ? (fin.res.winner === 'a' ? fin.a : fin.b) : null;
-    body = `${champ ? `<div class="champ">🏆<div><span class="small">Vô địch</span><b>${esc(teamName(champ))}</b></div></div>` : ''}
+    body = `${champ ? `<div class="champ"><i class="i i-trophy"></i><div><span class="small">Vô địch</span><b>${esc(teamName(champ))}</b></div></div>` : ''}
       ${rs.map((ms, r) => `<div class="sec-title"><h2>${koRoundName(r, rs.length)}</h2></div><div class="card tlist">${ms.filter(m => !(m.bye && r === 0 && !(m.a && m.b))).map(m => tourMatchRow(t, m)).join('') || '<div class="small muted" style="padding:8px 0">Các đội được miễn đấu vòng này</div>'}</div>`).join('')}
-      ${rs[0].some(m => m.bye) ? `<div class="tip">ℹ️ <span>Miễn đấu vòng 1: ${rs[0].filter(m => m.bye).map(m => esc(teamName(m.a || m.b))).join(', ')} (hạt giống cao).</span></div>` : ''}`;
+      ${rs[0].some(m => m.bye) ? `<div class="tip"><i class="i i-info"></i> <span>Miễn đấu vòng 1: ${rs[0].filter(m => m.bye).map(m => esc(teamName(m.a || m.b))).join(', ')} (hạt giống cao).</span></div>` : ''}`;
   }
-  return head + body + (canEdit() ? `<button class="btn danger block" style="margin-top:16px" onclick="endTour()">🗑️ Huỷ giải</button>` : '') +
-    `<div class="tip">💡 <span>${canEdit() ? 'Chạm vào trận để ghi kết quả. ' : ''}Kết quả giải được tính vào thống kê và trình độ tự động.</span></div>`;
+  return head + body + (canEdit() ? `<button class="btn danger block" style="margin-top:16px" onclick="endTour()"><i class="i i-trash"></i> Huỷ giải</button>` : '') +
+    `<div class="tip"><i class="i i-info"></i> <span>${canEdit() ? 'Chạm vào trận để ghi kết quả. ' : ''}Kết quả giải được tính vào thống kê và trình độ tự động.</span></div>`;
 }

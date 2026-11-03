@@ -87,3 +87,31 @@ test('dán danh sách từ Zalo: bỏ số thứ tự, bỏ tên trùng', () => 
   app.addPlayers('1. Hùng\n2) Lan\n3 - Minh\nhùng\n, Tú;');
   assert.strictEqual(JSON.stringify(app.S.players.map(p => p.name)), JSON.stringify(['Hùng', 'Lan', 'Minh', 'Tú']));
 });
+
+test('dữ liệu lạ từ máy chủ bị lọc: không chèn được mã vào giao diện', () => {
+  const app = loadApp();
+  const bad = {
+    players: [
+      { id: 'ok1', name: '<img src=x onerror=alert(1)>', level: '9', active: 1 },
+      { id: "x');alert(1);('", name: 'Hacker', level: 3, active: true },
+      { id: 'ok2', name: 'Lan', level: 2, active: true, extra: '<script>' },
+    ],
+    settings: { courts: 99, mode: 'evil', sport: '<b>', courtNames: ['<i>'], preview: 7 },
+    session: { rounds: [{ no: 1, courts: [{ a: ['ok1', "');x('"], b: ['ok2'], winner: 'z', score: ['<b>', 5], name: 'Sân 1' }], resting: ['ok1', '<x>'], done: 1 }],
+      credit: { ok1: 2, '<x>': 5 } },
+  };
+  const s = app.sanitize(bad);
+  assert.deepStrictEqual(s.players.map(p => p.id).join(), 'ok1,ok2');
+  assert.strictEqual(s.players[0].level, 5);
+  assert.strictEqual(s.players[1].extra, undefined);
+  assert.strictEqual(s.settings.courts, 10);
+  assert.strictEqual(s.settings.mode, 'balanced');
+  assert.strictEqual(s.settings.sport, 'badminton');
+  assert.strictEqual(s.settings.preview, 3);
+  const c = s.session.rounds[0].courts[0];
+  assert.strictEqual(c.a.join(), 'ok1');
+  assert.strictEqual(c.winner, null);
+  assert.strictEqual(c.score.join(), '0,5');
+  assert.strictEqual(s.session.rounds[0].resting.join(), 'ok1');
+  assert.strictEqual(Object.keys(s.session.credit).join(), 'ok1');
+});

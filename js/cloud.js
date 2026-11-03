@@ -1,7 +1,7 @@
 /* ================== PHÒNG ONLINE (Firebase) ==================
  * rooms/<mã phòng>            {name, created, sport} công khai: danh sách phòng hiện có (không chứa dữ liệu)
  * roomKeys/<mã phòng>         <khoá xem>            không ai đọc được; để Rules biết ai được xoá phòng
- * data/<SHA256(mã+mật khẩu)>  {s: JSON, t, by}      ai biết mật khẩu mới tính ra được địa chỉ này
+ * data/<SHA256(mã+mật khẩu)>  {s: JSON, t, by, v}   ai biết mật khẩu mới tính ra được địa chỉ này; v = số phiên bản
  * adminKeys/<khoá xem>        SHA256(mã+mã quản lý) không ai đọc được
  * admins/<khoá xem>/<uid>     thiết bị đã nhập đúng mã quản lý -> được ghi data
  */
@@ -10,6 +10,8 @@ const FB_VER = '10.12.2';
 let FB = null, fbDb = null, myUid = null, cloudReady = null;
 let roomStatus = 'connecting'; // connecting | online | offline
 let unsubRoom = null, lastRemote = '', pushT = null;
+// chống ghi đè: mỗi lần ghi tăng v; chỉ ghi được nếu bản trên máy chủ vẫn là bản mình đã nhận (remoteV)
+let remoteV = 0, roomSynced = false, pushing = false, pushAgain = false, pendingS = null;
 // Sảnh phòng: màn hình đầu tiên khi mở web (nếu đã bật Firebase)
 let lobby = CLOUD_ON;
 let lobbyRooms = null, lobbyErr = '', lobbyQ = '', unsubRooms = null, lobbySport = 'all', newSport = null;
@@ -65,25 +67,43 @@ function schedulePush() {
 }
 function pushNow() {
   if (!room || !room.admin || !FB) return;
+  if (pushing || !roomSynced) { pushAgain = true; return; } // chờ lần ghi trước / chờ nhận dữ liệu phòng lần đầu
   const s = JSON.stringify(syncPart());
   if (s === lastRemote) return;
-  lastRemote = s;
-  FB.set(dbRef('data/' + room.key), { s, t: FB.serverTimestamp(), by: myUid }).catch(e => {
+  const key = room.key, base = remoteV;
+  pushing = true; pendingS = s;
+  FB.runTransaction(dbRef('data/' + key), cur => {
+    if (cur && (cur.v || 0) !== base) return; // máy khác vừa ghi -> huỷ, không ghi đè
+    return { s, t: Date.now(), by: myUid, v: base + 1 };
+  }, { applyLocally: false }).then(res => {
+    if (!room || room.key !== key) return;
+    if (res.committed) { remoteV = base + 1; lastRemote = s; return; }
+    const v = res.snapshot.val();
+    if (v && typeof v.s === 'string') {
+      remoteV = v.v || 0; lastRemote = v.s; applyRemoteStr(v.s);
+      toast('⚠️ Người quản lý khác vừa cập nhật — đã tải bản mới nhất, hãy thao tác lại');
+    }
+  }).catch(e => {
     if (/permission/i.test(String(e && (e.code || e.message)))) { room.admin = false; rememberRoom(room); render(); toast('Mất quyền quản lý — hãy nhập lại mã quản lý'); }
     else toast('Chưa lưu được lên mạng: ' + cloudError(e));
+  }).finally(() => {
+    pushing = false; pendingS = null;
+    if (pushAgain) { pushAgain = false; schedulePush(); }
   });
 }
-function applyRemote(obj) {
-  S.players = obj.players || [];
-  S.settings = Object.assign({ courts: 2, mode: 'balanced', preview: 3, courtNames: [], sport: 'badminton' }, obj.settings);
-  S.session = Object.assign({ rounds: [], credit: {} }, obj.session);
+function applyRemoteStr(s) {
+  let obj; try { obj = JSON.parse(s); } catch (e) { return false; }
+  const clean = sanitizeState(obj);
+  S.players = clean.players; S.settings = clean.settings; S.session = clean.session;
   try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {}
   selSlot = null;
   render();
+  return true;
 }
 function subscribeRoom() {
   if (unsubRoom) unsubRoom();
   const key = room.key;
+  remoteV = 0; roomSynced = false; pushAgain = false;
   unsubRoom = FB.onValue(dbRef('data/' + key), snap => {
     if (!room || room.key !== key) return;
     const v = snap.val();
@@ -92,10 +112,14 @@ function subscribeRoom() {
       dropRoomLocal(id); room = null; lastRemote = ''; S = loadState(); lobby = true; selSlot = null; focusId = null;
       closeSheet(); render(); toast('Phòng này đã bị người quản lý xoá'); return;
     }
-    if (v.s === lastRemote) return;
+    if (typeof v.s !== 'string') return;
+    remoteV = v.v || 0;
+    const first = !roomSynced; roomSynced = true;
+    if (v.s === lastRemote || v.s === pendingS) { lastRemote = v.s; return; } // chính mình vừa ghi
     lastRemote = v.s;
-    try { applyRemote(JSON.parse(v.s)); } catch (e) {}
+    applyRemoteStr(v.s);
     if (room && room.sport !== SP().key) { room.sport = SP().key; rememberRoom(room); }
+    if (first && pushAgain) { pushAgain = false; schedulePush(); }
   }, e => toast('Lỗi đồng bộ: ' + cloudError(e)));
 }
 
@@ -187,7 +211,7 @@ async function createRoom(name, idRaw, pw, code, copyLocal, sport) {
   try { await FB.set(dbRef('roomKeys/' + id), key); } catch (e) { throw /permission/i.test(String(e.code || e.message)) ? taken() : e; }
   await FB.set(dbRef('adminKeys/' + key), ak);
   await FB.set(dbRef('admins/' + key + '/' + myUid), ak);
-  await FB.set(dbRef('data/' + key), { s: JSON.stringify(init), t: FB.serverTimestamp(), by: myUid });
+  await FB.set(dbRef('data/' + key), { s: JSON.stringify(init), t: Date.now(), by: myUid, v: 1 });
   await FB.set(dbRef('rooms/' + id), { name: name.trim().slice(0, 40), created: FB.serverTimestamp(), sport });
   try { localStorage.setItem('badminton_room_' + id, JSON.stringify(Object.assign(defaultState(), init, { tab: 'players' }))); } catch (e) {}
   enterRoom({ id, name: name.trim().slice(0, 40), key, admin: true, pw, sport });

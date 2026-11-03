@@ -22,7 +22,7 @@ function loadApp() {
 ;globalThis.app = {
   get S() { return S; }, set S(v) { S = v; },
   defaultState, buildRound, bestArrangement, computeStats, generateRound, finishRound, giveCredit, addPlayers,
-  togglePlayer, addCourt, removeCourt, activePlayers, curRound, ensurePlan, pairKey, P, uid,
+  togglePlayer, addCourt, removeCourt, activePlayers, curRound, ensurePlan, pairKey, P, uid, sanitize: sanitizeState,
 };`, ctx, { filename: 'app-bundle.js' });
   return ctx.app;
 }

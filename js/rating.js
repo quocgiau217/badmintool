@@ -46,38 +46,96 @@ function setAutoLevel(on) {
 const fmtRating = r => Math.round(r).toLocaleString('vi-VN');
 
 /* ---------- lưu tổng kết buổi ---------- */
-function sessionSummary() {
-  const tc = tourCourts(), done = S.session.rounds.filter(r => r.done).concat(tc.length ? [{ courts: tc, resting: [], done: true, q: true }] : []);
+// tổng kết 1 nhóm vòng đã xong: {d, sport, n (số vòng), games, p:{id:[trận, thắng, hiệu số]}, pairs:{a|b:[trận, thắng]}}
+function summaryOf(done, d) {
   const games = done.reduce((s, r) => s + r.courts.length, 0);
   if (!games) return null;
   const st = computeStats(done), p = {}, pairs = {};
-  S.players.forEach(x => { if (st.played[x.id]) p[x.id] = [st.played[x.id], st.wins[x.id] || 0, st.diff[x.id] || 0]; });
+  Object.keys(st.played).forEach(id => { if (st.played[id] && isId(id)) p[id] = [st.played[id], st.wins[id] || 0, st.diff[id] || 0]; });
   resultMatches(done).forEach(c => ['a', 'b'].forEach(t => {
     if (c[t].length !== 2) return;
     const k = pairKey(c[t][0], c[t][1]), v = pairs[k] = pairs[k] || [0, 0];
     v[0]++; if (c.winner === t) v[1]++;
   }));
-  return { d: S.session.started || done[0].courts[0].start || Date.now(), sport: SP().key, n: done.filter(r => !r.q).length, games, p, pairs };
+  return { d: d || done[0].courts[0].start || Date.now(), sport: SP().key, n: done.filter(r => !r.q).length, games, p, pairs };
+}
+function sessionSummary() {
+  const tc = tourCourts(), done = S.session.rounds.filter(r => r.done).concat(tc.length ? [{ courts: tc, resting: [], done: true, q: true }] : []);
+  return done.length ? summaryOf(done, S.session.started) : null;
 }
 // gọi khi bắt đầu buổi mới
 function closeSession() {
   const sum = sessionSummary();
-  if (sum) S.archive = [sum, ...(S.archive || [])].slice(0, 100);
+  if (sum) S.archive = [sum, ...(S.archive || [])];
+  rollArchive(monthStart());
   const R = ratingsNow();
   S.players.forEach(p => { if (R[p.id] != null && (autoLv() || p.r0 != null)) { p.r0 = Math.round(R[p.id]); if (autoLv()) p.level = levelFromRating(p.r0); } });
 }
 
+/* ---------- giữ dữ liệu phòng nhỏ ----------
+ * Phòng online lưu thành 1 khối (giới hạn ROOM_MAX ký tự trong Rules), mỗi lần sửa cả khối được gửi tới mọi máy đang xem.
+ * - Các buổi trước tháng này được gộp thành 1 mục tổng (k = số buổi, p[id][3] = số buổi người đó chơi):
+ *   thống kê "Tháng này" và "Tất cả" vẫn đúng, chỉ không còn chi tiết từng buổi cũ (vốn không hiện ở đâu).
+ * - Khi khối vượt ROOM_SOFT (buổi chơi kéo dài nhiều tuần không bấm "Bắt đầu buổi mới"): các vòng rất cũ
+ *   được gộp vào thống kê và điểm trình độ đầu buổi, chỉ giữ lại các vòng gần nhất. */
+const ROOM_MAX = 500000, ROOM_SOFT = 350000;
+const monthStart = (t = Date.now()) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), 1).getTime(); };
+const isRoll = a => a && a.k > 0;
+function rollArchive(before) {
+  const list = S.archive || [], old = list.filter(a => isRoll(a) || a.d < before);
+  if (old.length < 2 && !(old.length === 1 && !isRoll(old[0]))) return false;
+  const keepIds = new Set(S.players.map(p => p.id));
+  const R = { d: Infinity, to: 0, k: 0, sport: SP().key, n: 0, games: 0, p: {}, pairs: {} };
+  old.forEach(a => {
+    R.d = Math.min(R.d, a.d); R.to = Math.max(R.to, a.to || a.d); R.k += a.k || 1; R.n += a.n || 0; R.games += a.games || 0;
+    Object.entries(a.p || {}).forEach(([id, v]) => { if (!keepIds.has(id)) return; const x = R.p[id] = R.p[id] || [0, 0, 0, 0]; x[0] += v[0]; x[1] += v[1]; x[2] += v[2]; x[3] += v[3] != null ? v[3] : 1; });
+    Object.entries(a.pairs || {}).forEach(([k, v]) => { if (!k.split('|').every(id => keepIds.has(id))) return; const x = R.pairs[k] = R.pairs[k] || [0, 0]; x[0] += v[0]; x[1] += v[1]; });
+  });
+  S.archive = list.filter(a => !old.includes(a)).concat([R]);
+  return true;
+}
+// gộp các vòng đã xong, chừa lại `keep` vòng gần nhất, vào thống kê (1 mục lưu trữ) và điểm trình độ đầu buổi
+function foldRounds(keep) {
+  const rs = S.session.rounds, lastDone = rs.length - (curRound() ? 1 : 0), cut = lastDone - keep;
+  if (cut <= 0) return false;
+  const old = rs.slice(0, cut).filter(r => r.done);
+  const R0 = {}; // điểm sau các vòng cũ = điểm đầu buổi mới cho phần còn lại
+  S.players.forEach(p => { R0[p.id] = r0Of(p); });
+  const avg = ids => ids.reduce((s, id) => s + (R0[id] != null ? R0[id] : 1000), 0) / ids.length;
+  resultMatches(old).forEach(c => {
+    const ea = 1 / (1 + Math.pow(10, (avg(c.b) - avg(c.a)) / 400)), sa = c.winner === 'a' ? 1 : 0;
+    const d = ELO_K * (c.score ? 1 + Math.min(Math.abs(c.score[0] - c.score[1]), 10) / 20 : 1) * (sa - ea);
+    c.a.forEach(id => { if (R0[id] != null) R0[id] += d; }); c.b.forEach(id => { if (R0[id] != null) R0[id] -= d; });
+  });
+  const sum = old.length ? summaryOf(old, S.session.started) : null;
+  if (sum) S.archive = [sum, ...(S.archive || [])];
+  S.players.forEach(p => { if (p.r0 != null || autoLv()) p.r0 = Math.round(R0[p.id]); });
+  S.session.rounds = rs.slice(cut);
+  if (S.session.started == null) S.session.started = Date.now();
+  R_CACHE = null;
+  return true;
+}
+const stateSize = () => JSON.stringify({ players: S.players, settings: S.settings, session: S.session, archive: S.archive || [] }).length;
+// trả về true nếu đã thu gọn
+function compactState() {
+  let changed = false;
+  const steps = [() => rollArchive(monthStart()), () => foldRounds(60), () => rollArchive(Infinity), () => foldRounds(20)];
+  for (const step of steps) { if (stateSize() <= ROOM_SOFT) break; if (step()) changed = true; }
+  if (changed) R_CACHE = null;
+  return changed;
+}
+
 /* ---------- gộp thống kê theo khoảng thời gian ---------- */
 function aggregate(range) {
-  const now = new Date(), from = range === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1).getTime() : 0;
+  const from = range === 'month' ? monthStart() : 0;
   const list = (S.archive || []).filter(a => a.d >= from).slice();
   const cur = sessionSummary(); if (cur) list.unshift(cur);
   const P_ = {}, pairs = {};
   list.forEach(a => {
-    Object.entries(a.p).forEach(([id, [pl, w, df]]) => { const x = P_[id] = P_[id] || { s: 0, pl: 0, w: 0, df: 0 }; x.s++; x.pl += pl; x.w += w; x.df += df; });
+    Object.entries(a.p).forEach(([id, [pl, w, df, ns]]) => { const x = P_[id] = P_[id] || { s: 0, pl: 0, w: 0, df: 0 }; x.s += ns != null ? ns : 1; x.pl += pl; x.w += w; x.df += df; });
     Object.entries(a.pairs || {}).forEach(([k, [g, w]]) => { const x = pairs[k] = pairs[k] || [0, 0]; x[0] += g; x[1] += w; });
   });
-  return { sessions: list.length, games: list.reduce((s, a) => s + a.games, 0), players: P_, pairs };
+  return { sessions: list.reduce((s, a) => s + (a.k || 1), 0), games: list.reduce((s, a) => s + a.games, 0), players: P_, pairs };
 }
 // cặp đồng đội thắng nhiều nhất (đủ số trận tối thiểu)
 function bestPairs(pairs, minGames) {

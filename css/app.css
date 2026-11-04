@@ -515,3 +515,16 @@ body:not(.has-bar) .undo{bottom:calc(90px + env(safe-area-inset-bottom))}
 /* nút ngôn ngữ & giao diện trên thanh đầu */
 .prefs-btn{width:auto;height:44px;padding:0 10px;display:inline-flex;gap:5px;align-items:center;color:#fff;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.22);font-weight:700;font-size:12px;letter-spacing:.02em}
 .prefs-btn.sq{width:44px;padding:0;justify-content:center}
+/* nhắc kết thúc buổi cũ */
+.card.stale{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;border-color:var(--accent)}
+.card.stale>.i{font-size:20px;color:var(--text);margin-top:2px}
+.card.stale>div{flex:1;min-width:0}
+.card.stale p{margin:4px 0 12px}
+/* dung lượng phòng */
+.roomsize{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.roomsize .small{display:flex;justify-content:space-between;gap:8px}
+.roomsize b{font-variant-numeric:tabular-nums}
+.roomsize .bar-track{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+.roomsize .bar-track i{display:block;height:100%;background:var(--brand);border-radius:3px}
+.roomsize.warn .bar-track i{background:var(--accent)}
+.roomsize p{margin:8px 0 0}

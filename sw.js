@@ -2,7 +2,7 @@
  * - File của app: lấy bản mới từ mạng trước; mạng chậm (>3s) hoặc mất mạng thì dùng bản đã lưu.
  * - Thư viện Firebase, font, ảnh QR: dùng bản đã lưu nếu có (các file này không đổi theo phiên bản).
  * Dữ liệu phòng vẫn do Firebase tự đồng bộ lại khi có mạng. */
-const CACHE = 'xepsan-v2';
+const CACHE = 'xepsan-v3';
 const SHELL = [
   './', 'index.html', 'config.js', 'manifest.webmanifest', 'css/app.css', 'css/icons.css', 'js/i18n.js', 'js/event.js',
   'js/state.js', 'js/algo.js', 'js/rating.js', 'js/actions.js', 'js/ui.js', 'js/money.js', 'js/me.js', 'js/tour.js', 'js/shareimg.js', 'js/merge.js', 'js/cloud.js', 'js/roomadmin.js', 'js/views.js', 'js/undo.js', 'js/main.js',

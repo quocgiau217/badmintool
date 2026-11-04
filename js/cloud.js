@@ -82,8 +82,10 @@ function schedulePush() {
 function pushNow() {
   if (!room || !room.admin || !FB) return;
   if (pushing || !roomSynced) { pushAgain = true; return; } // chờ lần ghi trước / chờ nhận dữ liệu phòng lần đầu
-  const s = JSON.stringify(syncPart());
+  let s = JSON.stringify(syncPart());
   if (s === lastRemote) return;
+  if (s.length >= ROOM_MAX - 2000 && compactState()) { save(); s = JSON.stringify(syncPart()); }
+  if (s.length >= ROOM_MAX - 2000) { toast(tx("Dữ liệu phòng đã đầy, chưa lưu lên mạng được. Hãy bấm \"Bắt đầu buổi mới\""), 'warn'); return; } // Rules sẽ từ chối, đừng báo nhầm là mất quyền
   const key = room.key, base = remoteV;
   pushing = true; pendingS = s;
   FB.runTransaction(dbRef('data/' + key), cur => {
@@ -353,6 +355,13 @@ ${tx("Mật khẩu: {0}", [room.pw])}` : ''));
 }
 
 /* ---------- giao diện phòng ---------- */
+// dung lượng dữ liệu phòng so với giới hạn (cho quản lý)
+function roomSizeHtml() {
+  const n = stateSize(), pct = Math.min(100, Math.round(n / ROOM_MAX * 100)), kb = x => Math.max(1, Math.round(x / 1024));
+  return `<div class="roomsize ${pct >= 70 ? 'warn' : ''}"><div class="small"><span>${tx("Dung lượng phòng")}</span><b>${tx("{0} KB / {1} KB", [kb(n), kb(ROOM_MAX)])}</b></div>
+    <div class="bar-track" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${tx("Dung lượng phòng")}"><i style="width:${Math.max(2, pct)}%"></i></div>
+    ${pct >= 70 ? `<p class="small muted">${tx("Phòng sắp đầy. Bấm \"Bắt đầu buổi mới\" để gộp các vòng đã chơi vào thống kê.")}</p>` : ''}</div>`;
+}
 async function runBusy(btn, fn) {
   if (btn.disabled) return;
   const card = btn.classList.contains('rtap'), label = btn.innerHTML; btn.disabled = true;
@@ -372,6 +381,7 @@ function openRoomSheet() {
       <div class="small muted">${tx("Mã phòng:")} <b>${esc(room.id)}</b>${room.pw ? ` ${tx("· Mật khẩu:")} <b>${esc(room.pw)}</b>` : ''}</div></div></div>
     <div class="room-meta"><span class="role ${room.admin ? 'adm' : ''}">${isMain() ? `<i class="i i-crown"></i> ${tx("Quản lý chính")}` : room.admin ? `<i class="i i-pencil"></i> ${tx("Quản lý phụ")}` : `<i class="i i-eye"></i> ${tx("Chỉ xem")}`}</span>
       <span class="small muted"><i class="dot ${roomStatus}"></i> ${statusText()}</span></div>
+    ${room.admin ? roomSizeHtml() : ''}
     <div style="display:grid;gap:10px;margin-top:16px">
       <button class="btn primary block" onclick="shareInvite()"><i class="i i-send"></i> ${tx("Mời mọi người vào phòng")}</button>
       ${room.admin ? '' : `<button class="btn block" onclick="openUnlock()"><i class="i i-key"></i> ${tx("Nhập mã quản lý để sửa")}</button>`}

@@ -119,7 +119,23 @@ function viewPlay() {
     <button class="${playView === 'tour' ? 'on' : ''}" onclick="playView='tour';render()"><i class="i i-trophy"></i> ${tx("Giải đấu")}</button></div>` : '';
   if (t && playView === 'tour') return seg + viewTour();
   const act = activePlayers().length, canTour = canEdit() && !t && act >= 3 * teamSize();
-  return meCard('play') + seg + viewPlayInner() + (canTour ? `<button class="btn ghost block" style="margin-top:16px" onclick="openTourCreate()"><i class="i i-trophy"></i> ${tx("Tổ chức giải đấu nhỏ (vòng tròn / loại trực tiếp)")}</button>` : '');
+  return meCard('play') + staleCard() + seg + viewPlayInner() + (canTour ? `<button class="btn ghost block" style="margin-top:16px" onclick="openTourCreate()"><i class="i i-trophy"></i> ${tx("Tổ chức giải đấu nhỏ (vòng tròn / loại trực tiếp)")}</button>` : '');
+}
+// buổi trước chưa được kết thúc (đã nghỉ hơn 10 tiếng): nhắc bắt đầu buổi mới để lưu thống kê và giữ phòng gọn
+let staleSkip = '';
+function lastActivity() {
+  let t = S.session.started || 0;
+  S.session.rounds.forEach(r => r.courts.forEach(c => { t = Math.max(t, c.end || 0, c.start || 0); }));
+  return t;
+}
+function staleCard() {
+  const done = S.session.rounds.filter(r => r.done).length, last = lastActivity(), sig = (room ? room.id : '') + ':' + last;
+  if (!canEdit() || !done || !last || nowSrv() - last < 10 * 3600e3 || staleSkip === sig) return '';
+  const d = new Date(last), day = `${d.getDate()}/${d.getMonth() + 1}`;
+  return `<div class="card stale"><i class="i i-calendar"></i><div><b>${tx("Buổi ngày {0} chưa kết thúc", [day])}</b>
+    <p class="small muted">${tx("Bắt đầu buổi mới để lưu thống kê buổi đó và giữ phòng gọn nhẹ. Danh sách người chơi vẫn giữ.")}</p>
+    <div class="row2"><button class="btn" onclick="staleSkip='${esc(sig)}';render()">${tx("Chơi tiếp")}</button>
+    <button class="btn primary" onclick="newSession()">${tx("Bắt đầu buổi mới")}</button></div></div></div>`;
 }
 function viewPlayInner() {
   const act = activePlayers().length, r = curRound();

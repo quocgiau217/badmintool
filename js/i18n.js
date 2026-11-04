@@ -636,5 +636,12 @@ function prefsReopen() { const sh = document.getElementById('sheet'); if (sh && 
 Object.assign(EN, {
   "Ngôn ngữ": "Language", "Giao diện": "Appearance", "Tự động": "Auto", "Sáng": "Light", "Tối": "Dark",
   "Ngôn ngữ & giao diện": "Language & appearance",
+  "Buổi ngày {0} chưa kết thúc": "The session of {0} is still open",
+  "Bắt đầu buổi mới để lưu thống kê buổi đó và giữ phòng gọn nhẹ. Danh sách người chơi vẫn giữ.": "Start a new session to save its stats and keep the room light. The player list is kept.",
+  "Chơi tiếp": "Keep playing",
+  "Dữ liệu phòng đã đầy, chưa lưu lên mạng được. Hãy bấm \"Bắt đầu buổi mới\"": "The room is full and could not be saved online. Tap \"Start a new session\"",
+  "Dung lượng phòng": "Room storage",
+  "{0} KB / {1} KB": "{0} KB / {1} KB",
+  "Phòng sắp đầy. Bấm \"Bắt đầu buổi mới\" để gộp các vòng đã chơi vào thống kê.": "The room is nearly full. Tap \"Start a new session\" to fold played rounds into the stats.",
   "Chuyển màn hình": "Switch screen", "Xếp Sân · Cầu lông & Pickleball": "Xếp Sân · Badminton & pickleball",
 });

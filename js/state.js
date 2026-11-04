@@ -91,16 +91,26 @@ function sanitizeState(raw) {
       paid: idMap(m.paid, v => (v ? true : undefined)), exclude: idMap(m.exclude, v => (v ? true : undefined)),
     };
   }
-  const archive = arr(raw.archive).slice(0, 100).map(a => {
-    a = obj(a);
-    return { d: num(a.d), sport: oneOf(a.sport, ['badminton', 'pickleball'], 'badminton'), n: int(a.n, 0, 9999, 0), games: int(a.games, 0, 99999, 0),
-      p: idMap(a.p, v => (Array.isArray(v) ? [int(v[0], 0, 9999, 0), int(v[1], 0, 9999, 0), int(v[2], -99999, 99999, 0)] : undefined)),
-      pairs: (() => { const o = {}; Object.entries(obj(a.pairs)).forEach(([k, v]) => { const [x, y] = k.split('|'); if (isId(x) && isId(y) && Array.isArray(v)) o[k] = [int(v[0], 0, 9999, 0), int(v[1], 0, 9999, 0)]; }); return o; })() };
+  // mục lưu trữ: 1 buổi, hoặc mục tổng (k = số buổi đã gộp, to = buổi muộn nhất, p[id][3] = số buổi người đó chơi)
+  const rawArch = arr(raw.archive).map(obj), rolls = rawArch.filter(a => +a.k > 0);
+  const archive = rawArch.filter(a => !(+a.k > 0)).slice(0, 100).concat(rolls.slice(0, 1)).map(a => {
+    const k = int(a.k, 0, 99999, 0), big = k ? 999999 : 9999;
+    const o = { d: num(a.d), sport: oneOf(a.sport, ['badminton', 'pickleball'], 'badminton'), n: int(a.n, 0, big, 0), games: int(a.games, 0, big * 10, 0),
+      p: idMap(a.p, v => (Array.isArray(v) ? [int(v[0], 0, big, 0), int(v[1], 0, big, 0), int(v[2], -big * 100, big * 100, 0)].concat(k ? [int(v[3], 0, k, 1)] : []) : undefined)),
+      pairs: (() => { const o = {}; Object.entries(obj(a.pairs)).forEach(([pk, v]) => { const [x, y] = pk.split('|'); if (isId(x) && isId(y) && Array.isArray(v)) o[pk] = [int(v[0], 0, big, 0), int(v[1], 0, big, 0)]; }); return o; })() };
+    if (k) { o.k = k; o.to = num(a.to, o.d); }
+    return o;
   });
   return { players, settings, session, archive };
 }
 let S = loadState();
-const save = () => { R_CACHE = null; try { localStorage.setItem(ctxKey(), JSON.stringify(S)); } catch (e) {} if (room && room.admin) schedulePush(); };
+const save = () => {
+  R_CACHE = null;
+  let j = JSON.stringify(S);
+  if (j.length > ROOM_SOFT && compactState()) j = JSON.stringify(S); // giữ phòng dưới giới hạn (rating.js)
+  try { localStorage.setItem(ctxKey(), j); } catch (e) {}
+  if (room && room.admin) schedulePush();
+};
 let selSlot = null;     // ô đang chọn để đổi chỗ: {c, t, i} hoặc {rest:i}
 let animNext = false;   // hiệu ứng khi vừa xếp vòng mới
 let bulkMode = false;   // ô dán nhiều tên

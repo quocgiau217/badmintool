@@ -101,6 +101,16 @@ Chạy test thuật toán (cần Node 18+, không cần cài gì thêm):
 npm test
 ```
 
+### Bài thử trên trình duyệt (cho lập trình viên)
+Thư mục `e2e/` chứa các bài thử chạy app thật trong Chromium (Playwright) với trình giả lập Firebase: dùng trên máy, phòng online & quyền (Rules), quản lý phụ, đổi mật khẩu / mã, xoá phòng, gộp thay đổi cùng lúc và lúc mất mạng, chặn dữ liệu độc hại, xin vào danh sách, tự điểm danh, báo tới lượt, dùng khi mất mạng, tiếng Anh + giao diện tối, màn hình hẹp, dung lượng phòng.
+```bash
+npm ci
+npx playwright install chromium
+npm run e2e
+```
+`npm run e2e` tự bật trình giả lập (cần Java 11+), nạp `database.rules.json`, chạy hết rồi tắt. Đã bật trình giả lập sẵn thì dùng `npm run e2e:run`.
+GitHub Actions (`.github/workflows/test.yml`) chạy `npm test` và `npm run e2e` mỗi lần đẩy code hoặc mở PR.
+
 ### Thử trên máy với trình giả lập (cho lập trình viên)
 ```bash
 npx firebase-tools emulators:start --only auth,database --project demo-badminton

@@ -106,7 +106,11 @@ function mergeStates(base, local, remote) {
   const started = pick(bs.started, ls.started, rs.started); if (started != null) session.started = started;
   const money = mergeMoney(bs.money, ls.money, rs.money); if (money) session.money = money;
   const t = mergeTour(bs.tour, ls.tour, rs.tour); if (t) session.tour = t;
-  const seen = new Set(), archive = [...(r.archive || []), ...(l.archive || [])].filter(a => { const k = a.d + ':' + a.games; return !seen.has(k) && seen.add(k); })
-    .sort((x, y) => y.d - x.d).slice(0, 100);
+  // lưu trữ: hợp các buổi của 2 bên; mục tổng (k) lấy bên gộp được nhiều hơn, bỏ các buổi nó đã gồm
+  const rolls = [...(r.archive || []), ...(l.archive || [])].filter(a => a.k > 0).sort((x, y) => (y.to - x.to) || (y.k - x.k));
+  const roll = rolls[0], seen = new Set();
+  const archive = [...(r.archive || []), ...(l.archive || [])].filter(a => !(a.k > 0) && !(roll && a.d <= roll.to))
+    .filter(a => { const k = a.d + ':' + a.games; return !seen.has(k) && seen.add(k); })
+    .sort((x, y) => y.d - x.d).slice(0, 100).concat(roll ? [roll] : []);
   return { state: { players: mergePlayers(b.players, l.players, r.players), settings, session, archive }, conflicts };
 }

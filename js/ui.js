@@ -136,7 +136,7 @@ function setFormat(f) {
   if (document.getElementById('sheet').classList.contains('show')) openSettings();
 }
 function setFlow(f) { S.settings.flow = f; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
-const fmtElapsed = t => { const s = Math.max(0, Math.floor((nowSrv() - t) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const fmtElapsed = t => { const s = Math.max(0, Math.floor((nowSrv() - t) / 1000)); return s >= 6 * 3600 ? '—' : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }; // quá 6 tiếng: sân bị bỏ ngỏ, không đếm nữa
 function setMode(m) { S.settings.mode = m; save(); render(); if (document.getElementById('sheet').classList.contains('show')) openSettings(); }
 function settingsHtml() {
   const act = activePlayers().length, K = perCourt(), maxC = Math.max(1, Math.floor(act / K));

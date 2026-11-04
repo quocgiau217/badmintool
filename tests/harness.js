@@ -25,6 +25,7 @@ function loadApp() {
   togglePlayer, addCourt, removeCourt, activePlayers, curRound, ensurePlan, pairKey, P, uid, sanitize: sanitizeState,
   parseMoney, moneyBill, saveCost, setMoneyMode, toggleExclude, togglePaid,
   evDefaults, evMakeTeams, evMakeGroups, rrPairs, gameValid, matchFromGames, evAllMatches, evStandings, evQualifiers, evSchedule, evCourtState, evFinished, evTeamSkill, gName,
+  rollArchive, foldRounds, compactState, stateSize, monthStart, ROOM_SOFT, ROOM_MAX, save,
   mergeStates, undoable, undoLast, tourMatches, tourSchedule, koThird, finishCourt, syncQueue, makeTeams, rrRounds, rrTable, koRounds, tourCourts, seedOrder, ratingsNow, closeSession, aggregate, bestPairs, sessionPairs, lvOf, setLevel, newSession, setWinner,
 };`, ctx, { filename: 'app-bundle.js' });
   return ctx.app;

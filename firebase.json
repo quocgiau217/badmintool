@@ -12,7 +12,11 @@
       "PRODUCT.md",
       "package.json",
       "tests/**",
-      "**/.*"
+      "**/.*",
+      "package-lock.json",
+      "e2e/**",
+      "node_modules/**",
+      ".github/**"
     ]
   },
   "emulators": {

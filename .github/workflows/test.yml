@@ -1,0 +1,49 @@
+# Chạy test thuật toán và bài thử trên trình duyệt (Chromium + trình giả lập Firebase) mỗi lần đẩy code / mở PR.
+name: Kiểm tra
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # trình giả lập Firebase cần Java
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Cài thư viện
+        run: npm ci
+
+      - name: Test thuật toán
+        run: npm test
+
+      - name: Lưu sẵn trình giả lập Firebase
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+
+      - name: Cài Chromium cho Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Bài thử trên trình duyệt
+        run: npm run e2e
+
+      - name: Nhật ký trình giả lập (khi lỗi)
+        if: failure()
+        run: cat database-debug.log firebase-debug.log 2>/dev/null | tail -200 || true

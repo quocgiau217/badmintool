@@ -3,6 +3,13 @@
   "private": true,
   "description": "Xếp sân cầu lông & pickleball — web app tĩnh, không cần build.",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "e2e": "firebase emulators:exec --only auth,database --project demo-badminton \"node --test --test-concurrency=1 e2e/*.e2e.js\"",
+    "e2e:run": "node --test --test-concurrency=1 e2e/*.e2e.js"
+  },
+  "devDependencies": {
+    "firebase": "10.12.2",
+    "firebase-tools": "13.35.1",
+    "playwright": "1.63.0"
   }
 }
